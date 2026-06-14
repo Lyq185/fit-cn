@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>笔套适配系统 V4.0</title>
+
+<style>
+/* ========== 保留所有原始样式不变 ========== */
+body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+    background:#000000;
+    color:#e5e7eb;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+}
+
+.app{
+    width:100%;
+    max-width:480px;
+    padding:16px;
+    box-sizing: border-box;
+}
+
+h1{
+    text-align:center;
+    font-size:20px;
+    font-weight:600;
+    color:#f0f0f0;
+    text-shadow:0 0 2px rgba(255,255,255,0.2);
+}
+
+.card{
+    background:#0c0c0c;
+    border-radius:18px;
+    border:1px solid #3a4a6a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    padding:10px 14px;
+    margin-bottom:10px;
+    transition: border-color 0.1s ease;
+}
+
+.card:hover{
+    border-color:#5a7a9a;
+}
+
+input[type="range"]{
+    width:100%;
+    margin-top:10px;
+    height:10px;
+    -webkit-appearance: none;
+    background:#2a2e3a;
+    border-radius:10px;
+    outline: none;
+}
+input[type="range"]:focus{
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f97316;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px #f97316;
+    cursor: pointer;
+}
+
+.row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:6px;
+}
+
+/* 用于步进器靠右对齐的容器 */
+.stepper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.stepper-row .stepper-label {
+    font-size: 18px;
+}
+.stepper-row .capsule-stepper {
+    margin-left: auto;
+}
+
+.big{
+    font-size:24px;
+    font-weight:400;
+}
+
+.tag{
+    font-size:18px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius: 40px;
+    background:#1a1a1a;
+    text-align:center;
+    border: 1px solid #3a3f4e;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+}
+
+.tag.xs{background:#2b6e3c; border-color:#6fbf4c;}
+.tag.s{background:#1e5a8a; border-color:#3b82f6;}
+.tag.m{background:#6b21a5; border-color:#c084fc;}
+.tag.l{background:#b45309; border-color:#f97316;}
+.tag.xl{background:#9b2c2c; border-color:#ef4444;}
+
+.tag.d1{background:#0e6b8f; border-color:#22d3ee;}
+.tag.d2{background:#0f766e; border-color:#2dd4bf;}
+.tag.d3{background:#a16207; border-color:#facc15;}
+.tag.d4{background:#c2410c; border-color:#fb923c;}
+.tag.d5{background:#b91c1c; border-color:#f87171;}
+.tag.d6{background:#a21caf; border-color:#e879f9;}
+
+.tag.mode-hint {
+    background: #f97316;
+    color: #0b0f17;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid #ffb347;
+    box-shadow: 0 0 6px rgba(249,115,22,0.4);
+    border-radius: 40px;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+}
+
+/* ========== 胶囊步进器样式 ========== */
+.capsule-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #0a0a0c;
+    padding: 3px 6px;
+    border-radius: 40px;
+    border: 1px solid #2a2e3a;
+    height: 36px;
+    font-size: 0;
+}
+
+.capsule-stepper button {
+    background: #1c1c22;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 30px;
+    font-size: 20px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: 0.1s linear;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.capsule-stepper button:active {
+    transform: scale(0.92);
+    background: #2c2c34;
+}
+
+.capsule-stepper .value {
+    font-size: 1.25rem;
+    font-weight: 500;
+    text-align: center;
+    color: #facc15;
+    min-width: auto;
+    padding: 0 2px;
+    white-space: nowrap;
+}
+
+.capsule-stepper button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none;
+}
+
+/* 修复 #limitVal 和 #q 的样式，与 .value 保持一致 */
+#limitVal,
+#q {
+    font-size: 1.25rem;
+    font-weight: 500;
+    text-align: center;
+    color: #facc15;
+    min-width: auto;
+    padding: 0 2px;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+/* ========== 有笔夹/无笔夹按钮样式 ========== */
+.switch{
+    display:flex;
+    gap:10px;
+}
+
+.switch button{
+    flex:1;
+    padding: 8px 12px 6px 12px;
+    line-height: 24px;
+    font-size: 18px;
+    border-radius: 40px;
+    border: 1px solid #2a2e3a;
+    background:#0a0a0a;
+    color:#fff;
+    font-weight:400;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.switch button:hover:not(.active) {
+    background: #2a2a2a;
+    border-color: #6b7280;
+}
+
+.switch button.active:hover {
+    background: #1d4ed8;
+    border-color: #93c5fd;
+}
+
+.switch .active{background:#2563eb; border-color:#60a5fa; box-shadow:0 0 6px #3b82f6;}
+
+/* 颜色模块 - 使用flex布局，标签在左侧，色块靠右 */
+.color-module-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+/* Color 标签样式 - 去掉胶囊背景 */
+.color-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #e5e7eb;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+.color-label-icon {
+    font-size: 18px;
+}
+.color-label-text {
+    font-size: 18px;
+    font-weight: 500;
+}
+/* 慢闪动画 - 与 👉 设置支持数量 一致 */
+@keyframes slowBlink {
+  0% { opacity: 1; }
+  25% { opacity: 0.25; }
+  50% { opacity: 1; }
+  75% { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+.color-label.blink {
+    animation: slowBlink 2.4s ease-in-out 1;
+}
+/* 颜色按钮闪烁样式 */
+.color-chip.blink {
+    animation: slowBlink 2.4s ease-in-out 1;
+}
+.color-chips-group {
+    display: flex;
+    gap: 10px;
+}
+/* 颜色按钮样式：支持背景色 + 图片覆盖 */
+.color-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 36px;
+    transition: 0.08s linear;
+    cursor: pointer;
+    overflow: visible;
+    flex-shrink: 0;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* 图片覆盖背景色 */
+.color-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+}
+/* 如果没有图片或图片加载失败，显示背景色 */
+.color-chip.no-image {
+    background-size: 60%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* 提示框样式 - 修复确保显示 */
+.color-chip .custom-tooltip {
+    position: absolute;
+    bottom: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(12px);
+    padding: 8px 18px;
+    border-radius: 40px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    line-height: 1.3;
+    font-family: inherit;
+    /* 确保初始不可见 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+/* 鼠标悬停时显示提示 */
+.color-chip:hover .custom-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.color-chip.active {
+    outline: 3px solid #facc15;
+    outline-offset: 2px;
+    transform: scale(0.96);
+}
+.color-chip.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (max-width: 480px) {
+    .color-chip .custom-tooltip {
+        padding: 6px 14px;
+        font-size: 14px;
+        bottom: 42px;
+    }
+}
+
+.color-name-in-history {
+    font-weight: 400;
+    margin-left: 0px;
+    white-space: nowrap;
+}
+
+/* ========== 记录项样式 - 原始卡片样式 ========== */
+.item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0e0e12;
+    border: 1px solid #2d3345;
+    border-radius: 14px;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 22px;
+    line-height: 1.4;
+    gap: 10px;
+    transition: border 0.1s;
+}
+.item:hover{
+    border-color: #f97316;
+}
+
+.item-code {
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+    flex: 1;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.highlight-number {
+    color: #f97316;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.del{
+    background: #2a2a2a;
+    border: 1px solid #4b5563;
+    color: #e5e7eb;
+    padding: 8px 16px;
+    border-radius: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.del:hover{
+    background: #f97316;
+    border-color: #ffb347;
+    color: #0b0f17;
+}
+
+.bottom{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    background:linear-gradient(to top, #000000, transparent);
+    padding-bottom:16px;
+    padding-top:12px;
+    box-sizing:border-box;
+}
+
+.bottom-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.bottom-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.bottom button {
+    flex: 1;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: transform 0.05s linear;
+}
+
+.bottom button:active {
+    transform: scale(0.97);
+}
+
+.bottom button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#genBtn {
+    background: #2563eb;
+    color: white;
+    box-shadow: 0 2px 8px #1e3a8a;
+}
+#copyBtn {
+    background: #f97316;
+    color: #0b0f17;
+    font-weight: 600;
+    border: 1px solid #ffb366;
+}
+#clearBtn {
+    background: #dc2626;
+    color: white;
+    box-shadow: 0 2px 6px #7f1a1a;
+}
+
+.toast{
+    position:fixed;
+    bottom:90px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#1f2937;
+    backdrop-filter: blur(8px);
+    color:#facc15;
+    padding:10px 18px;
+    border-radius:40px;
+    font-weight:600;
+    border-left: 3px solid #f97316;
+    opacity:0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Save 确认面板 */
+#confirmPanel {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter: blur(4px);
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+}
+
+#confirmBox {
+  background:#121212;
+  border-radius:20px;
+  padding:24px 20px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+  border: 1px solid #2a2e3a;
+  box-shadow:0 20px 35px rgba(0,0,0,0.6);
+}
+
+#confirmText {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    word-break: break-word;
+    background: #1a1a1a;
+    border: 1px solid #f97316;
+    border-radius: 14px;
+    padding: 14px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#confirmHint {
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+#confirmHint.blink {
+  animation: slowBlink 2.4s ease-in-out 1;
+}
+
+.confirm-btns {
+  display:flex;
+  gap:12px;
+}
+
+.confirm-btns button {
+  flex:1;
+  padding:12px;
+  font-size:18px;
+  font-weight:600;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+}
+
+#confirmCancel {
+  background:#374151;
+  color:#fff;
+}
+
+#confirmSave {
+  background:#22c55e;
+  color:#000;
+}
+
+/* Clear 确认面板 */
+#clearConfirmPanel {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter: blur(4px);
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+}
+
+#clearConfirmBox {
+  background:#121212;
+  border-radius:20px;
+  padding:24px 20px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+  border: 1px solid #2a2e3a;
+  box-shadow:0 20px 35px rgba(0,0,0,0.6);
+}
+
+#clearConfirmText {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    word-break: keep-all;
+    background: #1a1a1a;
+    border: 1px solid #f97316;
+    border-radius: 40px;
+    padding: 10px 20px;
+    width: auto;
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.clear-confirm-btns {
+  display:flex;
+  gap:12px;
+}
+
+.clear-confirm-btns button {
+  flex:1;
+  padding:12px;
+  font-size:18px;
+  font-weight:600;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+}
+
+#clearConfirmCancel {
+  background:#374151;
+  color:#fff;
+}
+
+#clearConfirmOK {
+  background:#22c55e;
+  color:#000;
+}
+
+/* 删除确认面板 */
+#deleteConfirmPanel {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter: blur(4px);
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+}
+
+#deleteConfirmBox {
+  background:#121212;
+  border-radius:20px;
+  padding:24px 20px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+  border: 1px solid #2a2e3a;
+  box-shadow:0 20px 35px rgba(0,0,0,0.6);
+}
+
+#deleteConfirmText {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    word-break: keep-all;
+    background: #1a1a1a;
+    border: 1px solid #f97316;
+    border-radius: 40px;
+    padding: 10px 20px;
+    width: auto;
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.delete-confirm-btns {
+  display:flex;
+  gap:12px;
+}
+
+.delete-confirm-btns button {
+  flex:1;
+  padding:12px;
+  font-size:18px;
+  font-weight:600;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+}
+
+#deleteConfirmCancel {
+  background:#374151;
+  color:#fff;
+}
+
+#deleteConfirmOK {
+  background:#dc2626;
+  color:#fff;
+}
+
+#historyPanel {
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    box-sizing:border-box;
+    padding-bottom:120px;
+}
+
+#previewCount {
+    color: #FCD34D;
+    font-weight: 400;
+    letter-spacing: 3px;
+}
+
+/* 预览文本：去掉胶囊背景样式 */
+#preview {
+    text-align: center;
+    font-weight: 600;
+    background: transparent;
+    padding: 12px 0;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 12px 0 0 0;
+}
+
+#previewCard .row div[style*="font-size:18px"] {
+    font-weight: 400 !important;
+}
+
+#previewCard .row label {
+    font-weight: 400 !important;
+}
+
+.hint{
+    font-size:16px;
+    font-weight:600;
+    color:#FCD34D;
+    white-space:nowrap;
+    transform: translateX(-6px);
+}
+
+#hint.blink, #c1.blink, #c2.blink, #copyBtn.blink, .color-label.blink, .color-chip.blink {
+  animation: slowBlink 2.4s ease-in-out 1;
+}
+
+#Lc{
+    font-size:20px;
+}
+
+#Dc{
+    font-size:20px;
+}
+
+#copyBtn {
+    border: 2px solid #f97316;
+    background: #f97316;
+    color: #0b0f17;
+    font-weight: 600;
+}
+
+#supportedQtyTitle {
+    font-weight: 600 !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<h1>✒️ 笔套适配系统 V4.0</h1>
+
+<!-- 步进器 1：支持数量（靠右对齐） -->
+<div class="card">
+  <div class="stepper-row">
+    <div class="stepper-label">
+      <span id="supportedQtyTitle" style="font-size:18px; display:none;">📦 支持数量</span>
+      <span class="hint" id="hint" style="display:none; font-size:18px;">👉 设置支持数量</span>
+    </div>
+    <div class="capsule-stepper" style="margin:0;">
+      <button onclick="setLimit(-1)">–</button><span class="value" id="limitVal">0</span><button onclick="setLimit(1)">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- 步进器 2：直径调节 + 开关（开关靠左，步进器靠右） -->
+<div class="card">
+  <input type="range" id="D" min="7" max="18.5" step="0.1" value="7">
+  <div style="margin-top:12px;">
+    <div class="stepper-row">
+      <div class="switch" style="margin:0;gap:6px;">
+        <button id="c1" onclick="mode('clipped')">有笔夹</button>
+        <button id="c2" onclick="mode('clipless')">无笔夹</button>
+      </div>
+      <div class="capsule-stepper" style="margin:0;">
+        <button id="diaMinusBtn" onclick="diaStep(-0.1)">–</button><span class="value" id="Dv">7.0</span><button id="diaPlusBtn" onclick="diaStep(0.1)">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="tag" id="Dc" style="margin-top:12px;text-align:center;"></div>
+</div>
+
+<!-- 步进器 3：长度调节（靠右对齐） -->
+<div class="card">
+  <input type="range" min="85" max="165" step="1" value="85" id="L">
+  <div class="stepper-row" style="margin-top:12px;">
+    <div class="stepper-label">📏 长度</div>
+    <div class="capsule-stepper" style="margin:0;">
+      <button onclick="lenStep(-0.1)">–</button><span class="value" id="Lv">85.0</span><button onclick="lenStep(0.1)">+</button>
+    </div>
+  </div>
+  <div class="tag" id="Lc" style="margin-top:12px;text-align:center;"></div>
+</div>
+
+<!-- 颜色模块：标签在左侧（🎨 颜色），颜色按钮靠右对齐 -->
+<div class="card" id="colorCard">
+  <div class="color-module-row">
+    <!-- 左侧标签：🎨 颜色（无胶囊背景） -->
+    <div class="color-label" id="colorLabel">
+      <span class="color-label-icon">🎨</span>
+      <span class="color-label-text">颜色</span>
+    </div>
+    <!-- 右侧颜色按钮组 -->
+    <div class="color-chips-group" id="colorChipsGroup">
+      <!-- 焦糖色 -->
+      <div class="color-chip" data-color="Caramel" style="background-color: #c47a44;">
+        <img src="images/Caramel.png" alt="焦糖色" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+        <span class="custom-tooltip" style="color: #c47a44;">Caramel</span>
+      </div>
+      <!-- 黄色 -->
+      <div class="color-chip" data-color="Yellow" style="background-color: #e5c07b;">
+        <img src="images/Yellow.png" alt="黄色" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+        <span class="custom-tooltip" style="color: #e5c07b;">Yellow</span>
+      </div>
+      <!-- 乌木黑 -->
+      <div class="color-chip" data-color="Nero" style="background-color: #4a4a4a;">
+        <img src="images/Nero.png" alt="乌木黑" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+        <span class="custom-tooltip" style="color: #4a4a4a;">Nero</span>
+      </div>
+      <!-- 红色 -->
+      <div class="color-chip" data-color="Red" style="background-color: #e34234;">
+        <img src="images/Red.png" alt="红色" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+        <span class="custom-tooltip" style="color: #e34234;">Red</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 步进器 4：适配预览面板 -->
+<div class="card" id="previewCard">
+  <div class="stepper-row">
+    <div class="stepper-label">
+      <label style="font-size:20px;">✨ 适配预览</label>
+      <div class="big" id="previewCount" style="font-size:22px; display:inline-block; margin-left:6px;"></div>
+    </div>
+    <div class="capsule-stepper" style="margin:0;">
+      <button id="qtyMinusBtn" class="qty-control-btn" onclick="handleQtyChange(-1)">–</button><span class="value" id="q">0</span><button id="qtyPlusBtn" class="qty-control-btn" onclick="handleQtyChange(1)">+</button>
+    </div>
+  </div>
+  <div id="preview" style="font-size:26px; word-break:break-word;"></div>
+</div>
+
+<div id="historyPanel">
+  <div id="history"></div>
+</div>
+
+<div class="bottom">
+  <div class="bottom-container">
+    <div class="bottom-buttons">
+      <button id="genBtn" onclick="showConfirm()">保存</button>
+      <button id="copyBtn" onclick="copy()" disabled>复制</button>
+      <button id="clearBtn" onclick="showClearConfirm()">清空</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Save 确认面板 -->
+<div id="confirmPanel">
+  <div id="confirmBox">
+    <div id="confirmText"></div>
+    <div id="confirmHint">请确认</div>
+    <div class="confirm-btns">
+      <button id="confirmCancel" onclick="hideConfirm()">取消</button>
+      <button id="confirmSave" onclick="doSave()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clear 确认面板 -->
+<div id="clearConfirmPanel">
+  <div id="clearConfirmBox">
+    <div id="clearConfirmText">清空所有数据？</div>
+    <div class="clear-confirm-btns">
+      <button id="clearConfirmCancel" onclick="hideClearConfirm()">取消</button>
+      <button id="clearConfirmOK" onclick="doClear()">清空</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认面板 -->
+<div id="deleteConfirmPanel">
+  <div id="deleteConfirmBox">
+    <div id="deleteConfirmText">确认删除此配置？</div>
+    <div class="delete-confirm-btns">
+      <button id="deleteConfirmCancel" onclick="hideDeleteConfirm()">取消</button>
+      <button id="deleteConfirmOK" onclick="doDelete()">删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const _0x42e206=_0x4e8a;(function(_0x53cb7c,_0x200f2f){const _0x4a3f9c=_0x4e8a,_0x342883=_0x53cb7c();while(!![]){try{const _0xd0f8af=-parseInt(_0x4a3f9c(0x21a))/0x1*(parseInt(_0x4a3f9c(0x216))/0x2)+-parseInt(_0x4a3f9c(0x1b9))/0x3*(parseInt(_0x4a3f9c(0x1c0))/0x4)+parseInt(_0x4a3f9c(0x1d8))/0x5+parseInt(_0x4a3f9c(0x1de))/0x6*(-parseInt(_0x4a3f9c(0x1b8))/0x7)+-parseInt(_0x4a3f9c(0x237))/0x8+parseInt(_0x4a3f9c(0x23e))/0x9+parseInt(_0x4a3f9c(0x1f5))/0xa;if(_0xd0f8af===_0x200f2f)break;else _0x342883['push'](_0x342883['shift']());}catch(_0x3b8037){_0x342883['push'](_0x342883['shift']());}}}(_0x3332,0xa4f67));const _0x2b1d80=(function(){let _0x104bca=!![];return function(_0x392baa,_0x5d50bd){const _0x3701b3=_0x104bca?function(){const _0x18fea8=_0x4e8a;if(_0x5d50bd){const _0x497069=_0x5d50bd[_0x18fea8(0x1f8)](_0x392baa,arguments);return _0x5d50bd=null,_0x497069;}}:function(){};return _0x104bca=![],_0x3701b3;};}()),_0x30ece6=_0x2b1d80(this,function(){const _0x1a118c=_0x4e8a;return _0x30ece6['toString']()['search'](_0x1a118c(0x233))[_0x1a118c(0x1a5)]()[_0x1a118c(0x196)](_0x30ece6)[_0x1a118c(0x1c2)](_0x1a118c(0x233));});_0x30ece6();const _0x27472a=(function(){let _0x5f1795=!![];return function(_0x1e9b40,_0x370284){const _0xea391d=_0x5f1795?function(){const _0x393f91=_0x4e8a;if(_0x370284){const _0x52d915=_0x370284[_0x393f91(0x1f8)](_0x1e9b40,arguments);return _0x370284=null,_0x52d915;}}:function(){};return _0x5f1795=![],_0xea391d;};}()),_0x49074b=_0x27472a(this,function(){const _0x18b3f0=_0x4e8a,_0x11f863=function(){const _0x46f407=_0x4e8a;let _0x23a850;try{_0x23a850=Function(_0x46f407(0x1d1)+_0x46f407(0x22d)+');')();}catch(_0x247530){_0x23a850=window;}return _0x23a850;},_0x32f740=_0x11f863(),_0x438880=_0x32f740[_0x18b3f0(0x235)]=_0x32f740[_0x18b3f0(0x235)]||{},_0x5c88e9=['log',_0x18b3f0(0x229),_0x18b3f0(0x21b),_0x18b3f0(0x19d),_0x18b3f0(0x205),'table',_0x18b3f0(0x22b)];for(let _0x8ff74f=0x0;_0x8ff74f<_0x5c88e9[_0x18b3f0(0x1f0)];_0x8ff74f++){const _0xbaf070=_0x27472a[_0x18b3f0(0x196)][_0x18b3f0(0x215)][_0x18b3f0(0x1a0)](_0x27472a),_0x348b0f=_0x5c88e9[_0x8ff74f],_0x7cc1da=_0x438880[_0x348b0f]||_0xbaf070;_0xbaf070[_0x18b3f0(0x1e5)]=_0x27472a[_0x18b3f0(0x1a0)](_0x27472a),_0xbaf070['toString']=_0x7cc1da[_0x18b3f0(0x1a5)][_0x18b3f0(0x1a0)](_0x7cc1da),_0x438880[_0x348b0f]=_0xbaf070;}});_0x49074b();const COLOR_DISPLAY_MAP={'Caramel':'焦糖色','Yellow':'黄色','Nero':_0x42e206(0x1e6),'Red':'红色'},COLOR_TEXT_MAP={'Caramel':_0x42e206(0x224),'Yellow':_0x42e206(0x1ac),'Nero':'#4a4a4a','Red':'#e34234'},COLOR_LIST=[_0x42e206(0x20d),_0x42e206(0x206),_0x42e206(0x1f7),_0x42e206(0x1cb)];let pendingDeleteKey=null,pendingDeleteQty=null;function clean(_0x1a7a5e){const _0x399eec=_0x42e206;return Number[_0x399eec(0x1cd)](_0x1a7a5e)?_0x1a7a5e[_0x399eec(0x1a5)]():_0x1a7a5e[_0x399eec(0x201)](0x1);}function showColorPickHint(){const _0x5ea55f=_0x42e206,_0x3edcd5=document['getElementById'](_0x5ea55f(0x1e8)),_0x322c3b=document[_0x5ea55f(0x1af)](_0x5ea55f(0x19c));_0x3edcd5&&(_0x3edcd5[_0x5ea55f(0x1fb)][_0x5ea55f(0x1d5)]=_0x5ea55f(0x227),_0x3edcd5[_0x5ea55f(0x1f4)],_0x3edcd5[_0x5ea55f(0x1fb)]['animation']='',_0x3edcd5[_0x5ea55f(0x219)][_0x5ea55f(0x203)]('blink'),setTimeout(()=>{const _0x5b96fb=_0x5ea55f;_0x3edcd5[_0x5b96fb(0x219)][_0x5b96fb(0x1bd)](_0x5b96fb(0x1dd));},0x960)),_0x322c3b[_0x5ea55f(0x210)](_0x2f57f4=>{const _0x4a118f=_0x5ea55f;_0x2f57f4[_0x4a118f(0x1fb)][_0x4a118f(0x1d5)]=_0x4a118f(0x227),_0x2f57f4[_0x4a118f(0x1f4)],_0x2f57f4[_0x4a118f(0x1fb)][_0x4a118f(0x1d5)]='',_0x2f57f4[_0x4a118f(0x219)][_0x4a118f(0x203)](_0x4a118f(0x1dd)),setTimeout(()=>{const _0x17d17f=_0x4a118f;_0x2f57f4['classList']['remove'](_0x17d17f(0x1dd));},0x960);});}function stopColorBlink(){const _0x533762=_0x42e206,_0x1540b2=document[_0x533762(0x1ca)](_0x533762(0x1e8)),_0x2b57a5=document[_0x533762(0x1af)](_0x533762(0x19c));_0x1540b2&&(_0x1540b2[_0x533762(0x219)][_0x533762(0x1bd)](_0x533762(0x1dd)),_0x1540b2[_0x533762(0x1fb)]['animation']=''),_0x2b57a5[_0x533762(0x210)](_0x317cac=>{const _0x30f0b5=_0x533762;_0x317cac[_0x30f0b5(0x219)]['remove'](_0x30f0b5(0x1dd)),_0x317cac['style'][_0x30f0b5(0x1d5)]='';});}let selectedColor=null,state={'limit':0x0,'used':0x0,'qty':0x0,'mode':null,'length':0x55,'dia':0x7,'history':{},'historyOrder':[]};const L=document[_0x42e206(0x1ca)]('L'),D=document[_0x42e206(0x1ca)]('D'),c1=document['getElementById']('c1'),c2=document[_0x42e206(0x1ca)]('c2'),genBtn=document[_0x42e206(0x1ca)]('genBtn'),copyBtn=document[_0x42e206(0x1ca)](_0x42e206(0x1b1)),hintSpan=document[_0x42e206(0x1ca)]('hint'),dcSpan=document['getElementById']('Dc'),colorSelectTitleSpan=document[_0x42e206(0x1ca)](_0x42e206(0x1a2)),qtyPlusBtn=document[_0x42e206(0x1ca)](_0x42e206(0x1a9)),qtyMinusBtn=document['getElementById'](_0x42e206(0x1a6)),previewDiv=document[_0x42e206(0x1ca)](_0x42e206(0x204));function updateTitleColor(){if(!colorSelectTitleSpan)return;selectedColor&&COLOR_TEXT_MAP[selectedColor]?colorSelectTitleSpan['style']['color']=COLOR_TEXT_MAP[selectedColor]:colorSelectTitleSpan['style']['color']='#ffffff';}function stopBlinking(){const _0x5c64e0=_0x42e206;if(hintSpan)hintSpan['classList']['remove'](_0x5c64e0(0x1dd));if(copyBtn)copyBtn['classList'][_0x5c64e0(0x1bd)]('blink');if(c1)c1[_0x5c64e0(0x219)]['remove'](_0x5c64e0(0x1dd));if(c2)c2[_0x5c64e0(0x219)]['remove']('blink');const _0xb06a9e=document['getElementById'](_0x5c64e0(0x1ec));if(_0xb06a9e)_0xb06a9e['classList'][_0x5c64e0(0x1bd)](_0x5c64e0(0x1dd));}function triggerBlink(_0x8071b2){const _0xdfb4cd=_0x42e206;if(!_0x8071b2)return;_0x8071b2[_0xdfb4cd(0x219)][_0xdfb4cd(0x1bd)](_0xdfb4cd(0x1dd)),void _0x8071b2[_0xdfb4cd(0x23a)],requestAnimationFrame(()=>{const _0x2458e4=_0xdfb4cd;_0x8071b2[_0x2458e4(0x219)][_0x2458e4(0x203)]('blink');});}function initColorSelector(){const _0x4817c4=_0x42e206,_0x1699c7=document[_0x4817c4(0x1af)](_0x4817c4(0x19c));_0x1699c7[_0x4817c4(0x210)](_0xeb33b8=>{const _0x2905ff=_0x4817c4;_0xeb33b8[_0x2905ff(0x1eb)](_0x2905ff(0x211),_0x15f34f=>{const _0x33841d=_0x2905ff;_0x15f34f[_0x33841d(0x1db)]();const _0x2229bc=state[_0x33841d(0x1bc)]>=0x1,_0x1c5221=state[_0x33841d(0x1b7)]!==null;if(!_0x2229bc||!_0x1c5221){toast('请先设置支持数量和笔夹类型');return;}const _0x4a6f73=_0xeb33b8[_0x33841d(0x1ba)]('data-color');_0x4a6f73&&COLOR_LIST[_0x33841d(0x220)](_0x4a6f73)&&(selectedColor=_0x4a6f73,updateColorActiveUI(),updateTitleColor(),renderPreviewText(),render(),save(),stopColorBlink());});});}function updateColorActiveUI(){const _0x1c2781=_0x42e206,_0x300f16=document[_0x1c2781(0x1af)]('.color-chip');_0x300f16[_0x1c2781(0x210)](_0x4c576d=>{const _0x167c46=_0x1c2781,_0x110959=_0x4c576d[_0x167c46(0x1ba)](_0x167c46(0x193));selectedColor&&_0x110959===selectedColor?_0x4c576d[_0x167c46(0x219)][_0x167c46(0x203)](_0x167c46(0x1c7)):_0x4c576d[_0x167c46(0x219)][_0x167c46(0x1bd)](_0x167c46(0x1c7));});}function renderPreviewText(){const _0x12a28b=_0x42e206;if(!previewDiv)return;const _0x2a5bc2=state[_0x12a28b(0x1b7)]!==null,_0x49cc83=state[_0x12a28b(0x1b7)]===_0x12a28b(0x1a3)?_0x12a28b(0x231):state['mode']===_0x12a28b(0x20b)?'无笔夹':'—',_0x27b63c='#f97316';let _0xb295ad='?';if(state[_0x12a28b(0x1b7)])_0xb295ad=toolCode();else _0xb295ad='—';if(_0x2a5bc2&&selectedColor){const _0x2d00ee=COLOR_DISPLAY_MAP[selectedColor]||selectedColor,_0xe6254a=COLOR_TEXT_MAP[selectedColor]||_0x12a28b(0x1b0),_0x52941d=_0x12a28b(0x22a)+_0xe6254a+';\x20font-weight:\x20600;\x22>'+_0x2d00ee+_0x12a28b(0x1c3),_0x5e7947=_0xb295ad+'\x20×\x20<span\x20style=\x27color:'+_0x27b63c+';\x20font-weight:600;\x27>'+state['qty']+_0x12a28b(0x1c3)+_0x12a28b(0x1f9)+_0x27b63c+';\x20font-weight:600;\x27>'+clean(state[_0x12a28b(0x1f0)])+'</span>-Ø<span\x20style=\x27color:'+_0x27b63c+_0x12a28b(0x1ea)+clean(state[_0x12a28b(0x1aa)])+_0x12a28b(0x192)+_0x12a28b(0x230)+_0x27b63c+';\x20font-weight:600;\x27>'+_0x49cc83+_0x12a28b(0x192)+_0x52941d+')';previewDiv[_0x12a28b(0x213)]=_0x5e7947;}else{if(_0x2a5bc2&&!selectedColor){const _0x963cff=_0xb295ad+'\x20×\x20<span\x20style=\x27color:'+_0x27b63c+_0x12a28b(0x1ea)+state[_0x12a28b(0x1fa)]+_0x12a28b(0x1c3)+_0x12a28b(0x1f9)+_0x27b63c+_0x12a28b(0x1ea)+clean(state[_0x12a28b(0x1f0)])+_0x12a28b(0x223)+_0x27b63c+';\x20font-weight:600;\x27>'+clean(state['dia'])+_0x12a28b(0x192)+_0x12a28b(0x230)+_0x27b63c+_0x12a28b(0x1ea)+_0x49cc83+'</span>-<span\x20style=\x27color:#ffb347;\x20font-weight:600;\x27>?</span>)';previewDiv[_0x12a28b(0x213)]=_0x963cff;}else{const _0x1cb323=_0xb295ad+_0x12a28b(0x1ab)+_0x27b63c+_0x12a28b(0x1ea)+state[_0x12a28b(0x1fa)]+_0x12a28b(0x1c3)+_0x12a28b(0x1f9)+_0x27b63c+';\x20font-weight:600;\x27>'+clean(state[_0x12a28b(0x1f0)])+_0x12a28b(0x223)+_0x27b63c+_0x12a28b(0x1ea)+clean(state[_0x12a28b(0x1aa)])+'</span>-'+'<span\x20style=\x27color:'+_0x27b63c+_0x12a28b(0x1ea)+_0x49cc83+_0x12a28b(0x1a8);previewDiv[_0x12a28b(0x213)]=_0x1cb323;}}}function applyModeConstraints(){const _0x3bb802=_0x42e206;if(state[_0x3bb802(0x1b7)]===_0x3bb802(0x1a3)){D[_0x3bb802(0x1fe)]=0x7,D[_0x3bb802(0x1c6)]=18.5;if(state[_0x3bb802(0x1aa)]<0x7)state[_0x3bb802(0x1aa)]=0x7;if(state[_0x3bb802(0x1aa)]>18.5)state[_0x3bb802(0x1aa)]=18.5;}else{if(state[_0x3bb802(0x1b7)]==='clipless'){D[_0x3bb802(0x1fe)]=8.5,D['max']=20.5;if(state[_0x3bb802(0x1aa)]<8.5)state[_0x3bb802(0x1aa)]=8.5;if(state[_0x3bb802(0x1aa)]>20.5)state['dia']=20.5;}}if(D)D[_0x3bb802(0x1fc)]=state[_0x3bb802(0x1aa)];}function save(){const _0x1c6b97=_0x42e206,_0x78e906={...state,'selectedColor':selectedColor,'historyOrder':state[_0x1c6b97(0x1b4)]};localStorage[_0x1c6b97(0x212)](_0x1c6b97(0x207),JSON[_0x1c6b97(0x1fd)](_0x78e906));}function load(){const _0x1fefd8=_0x42e206;try{const _0x4efd23=JSON['parse'](localStorage[_0x1fefd8(0x217)](_0x1fefd8(0x207)));_0x4efd23?(state[_0x1fefd8(0x1bc)]=_0x4efd23['limit']||0x0,state[_0x1fefd8(0x1a7)]=_0x4efd23[_0x1fefd8(0x1a7)]||0x0,state[_0x1fefd8(0x1fa)]=_0x4efd23[_0x1fefd8(0x1fa)]||0x0,state[_0x1fefd8(0x1b7)]=_0x4efd23['mode']||null,state['length']=_0x4efd23[_0x1fefd8(0x1f0)]||0x55,state[_0x1fefd8(0x1aa)]=_0x4efd23[_0x1fefd8(0x1aa)]||0x7,state[_0x1fefd8(0x236)]=_0x4efd23['history']||{},state[_0x1fefd8(0x1b4)]=_0x4efd23['historyOrder']||[],selectedColor=_0x4efd23[_0x1fefd8(0x1c1)]!==undefined?_0x4efd23['selectedColor']:null):(selectedColor=null,state[_0x1fefd8(0x1b4)]=[]);if(selectedColor&&!COLOR_LIST['includes'](selectedColor))selectedColor=null;state[_0x1fefd8(0x1b4)]?state['historyOrder']=state[_0x1fefd8(0x1b4)][_0x1fefd8(0x23d)](_0x1f7fa7=>state['history'][_0x1f7fa7]):state[_0x1fefd8(0x1b4)]=[];}catch(_0xb07c3c){selectedColor=null,state[_0x1fefd8(0x1b4)]=[];}updateTitleColor();}load(),applyModeConstraints(),updateColorActiveUI(),L[_0x42e206(0x1f1)]=_0x44ff1b=>{const _0x1ce4d2=_0x42e206;state[_0x1ce4d2(0x1f0)]=+_0x44ff1b[_0x1ce4d2(0x239)][_0x1ce4d2(0x1fc)],render(),save();},D[_0x42e206(0x1f1)]=_0x2e4b43=>{const _0x1f0f15=_0x42e206;state['dia']=+_0x2e4b43['target'][_0x1f0f15(0x1fc)],render(),save();};function setLimit(_0x2779f9){const _0x36e9cb=_0x42e206,_0x52a853=Math[_0x36e9cb(0x1c6)](0x0,state[_0x36e9cb(0x1bc)]+_0x2779f9);state[_0x36e9cb(0x1bc)]=_0x52a853,state['limit']===0x0&&(state[_0x36e9cb(0x1b7)]=null,selectedColor=null,c1['classList'][_0x36e9cb(0x1bd)](_0x36e9cb(0x1c7)),c2[_0x36e9cb(0x219)][_0x36e9cb(0x1bd)](_0x36e9cb(0x1c7)),updateColorActiveUI(),updateTitleColor()),render(),save();}function mode(_0x140d4c){const _0x384d6a=_0x42e206;if(state[_0x384d6a(0x1bc)]===0x0){toast(_0x384d6a(0x195));return;}state[_0x384d6a(0x1b7)]=_0x140d4c,selectedColor=null,updateTitleColor(),applyModeConstraints(),c1['classList'][_0x384d6a(0x1c8)](_0x384d6a(0x1c7),_0x140d4c===_0x384d6a(0x1a3)),c2['classList']['toggle'](_0x384d6a(0x1c7),_0x140d4c===_0x384d6a(0x20b)),updateColorActiveUI(),render(),save();}function lenStep(_0x40144a){const _0x261f7d=_0x42e206;state['length']=Math[_0x261f7d(0x1c6)](0x55,Math[_0x261f7d(0x1fe)](0xa5,+(state[_0x261f7d(0x1f0)]+_0x40144a)[_0x261f7d(0x201)](0x1))),L[_0x261f7d(0x1fc)]=state[_0x261f7d(0x1f0)],render(),save();}function diaStep(_0x2bc088){const _0x43cc66=_0x42e206;state['dia']=Math[_0x43cc66(0x1c6)](+D[_0x43cc66(0x1fe)],Math[_0x43cc66(0x1fe)](+D['max'],+(state[_0x43cc66(0x1aa)]+_0x2bc088)[_0x43cc66(0x201)](0x1))),D[_0x43cc66(0x1fc)]=state[_0x43cc66(0x1aa)],render(),save();}function toolCode(){const _0x474dfa=_0x42e206;if(!state[_0x474dfa(0x1b7)])return'?';return lenCode(state['length'])+diaCode(state[_0x474dfa(0x1aa)]);}function lenCode(_0x27661d){const _0x4b9eb8=_0x42e206,_0x5846ef=[{'max':0x66},{'max':0x76},{'max':0x87},{'max':0x96},{'max':0xa5}];for(let _0x3ec7a9=0x0;_0x3ec7a9<_0x5846ef['length'];_0x3ec7a9++){if(_0x27661d<=_0x5846ef[_0x3ec7a9][_0x4b9eb8(0x1c6)])return _0x3ec7a9+0x1;}return 0x5;}function _0x4e8a(_0x16a3e3,_0xf25321){_0x16a3e3=_0x16a3e3-0x192;const _0x5778a6=_0x3332();let _0x49074b=_0x5778a6[_0x16a3e3];return _0x49074b;}function diaCode(_0x2dfca6){const _0x208e38=_0x42e206;if(!state[_0x208e38(0x1b7)])return'A';const _0x1ca345=state[_0x208e38(0x1b7)]===_0x208e38(0x1a3)?[{'max':8.5,'code':'A'},{'max':10.5,'code':'B'},{'max':12.5,'code':'C'},{'max':14.5,'code':'D'},{'max':16.5,'code':'E'},{'max':18.5,'code':'F'}]:[{'max':10.5,'code':'A'},{'max':12.5,'code':'B'},{'max':14.5,'code':'C'},{'max':16.5,'code':'D'},{'max':18.5,'code':'E'},{'max':20.5,'code':'F'}];for(const _0x5eee68 of _0x1ca345){if(_0x2dfca6<=_0x5eee68['max'])return _0x5eee68[_0x208e38(0x1cc)];}return'A';}function getDiameterText(){const _0x53c343=_0x42e206;if(!state[_0x53c343(0x1b7)])return'Ø\x20—';const _0x1ad5ab=diaCode(state[_0x53c343(0x1aa)]),_0x1d0104=[_0x53c343(0x1be),_0x53c343(0x23b),'Slim','Standard',_0x53c343(0x1e1),_0x53c343(0x1c5)],_0x2a8a7a=_0x1ad5ab[_0x53c343(0x1ed)](0x0)-0x41;return'Ø\x20'+(_0x1d0104[_0x2a8a7a]||'—');}function getDiameterClass(){const _0x1549da=_0x42e206;if(!state[_0x1549da(0x1b7)])return _0x1549da(0x19b);const _0x5a7885=diaCode(state[_0x1549da(0x1aa)]),_0x590895=_0x5a7885['charCodeAt'](0x0)-0x41;return'tag\x20'+(['d1','d2','d3','d4','d5','d6'][_0x590895]||_0x1549da(0x19b));}function handleQtyChange(_0x7b65ab){const _0x5a2429=_0x42e206;if(state[_0x5a2429(0x1bc)]===0x0){toast('请先设置支持数量');return;}if(state[_0x5a2429(0x1b7)]===null){toast(_0x5a2429(0x20e));return;}if(!selectedColor){showColorPickHint();return;}const _0x46e57a=Math['max'](0x0,state[_0x5a2429(0x1fa)]+_0x7b65ab);if(state[_0x5a2429(0x1a7)]+_0x46e57a>state[_0x5a2429(0x1bc)]){toast(_0x5a2429(0x1c9));return;}state[_0x5a2429(0x1fa)]=_0x46e57a,render(),save();}function qty(_0x2d3c8b){handleQtyChange(_0x2d3c8b);}function showConfirm(){const _0xf06863=_0x42e206;if(state['limit']===0x0||state[_0xf06863(0x1b7)]===null){toast(_0xf06863(0x20e));return;}if(!selectedColor){showColorPickHint();return;}if(state[_0xf06863(0x1fa)]<=0x0)return toast(_0xf06863(0x1d3));if(state[_0xf06863(0x1a7)]+state[_0xf06863(0x1fa)]>state[_0xf06863(0x1bc)])return toast(_0xf06863(0x1c9));const _0x18b14b=state['mode']===_0xf06863(0x1a3)?_0xf06863(0x231):_0xf06863(0x1f2),_0x157e83=_0xf06863(0x1e4),_0x373b86=toolCode(),_0x52f3ee=COLOR_DISPLAY_MAP[selectedColor]||selectedColor,_0x14b1c9=COLOR_TEXT_MAP[selectedColor]||_0xf06863(0x1b0);document[_0xf06863(0x1ca)](_0xf06863(0x1dc))[_0xf06863(0x213)]=_0x373b86+_0xf06863(0x1ab)+_0x157e83+_0xf06863(0x1ea)+state[_0xf06863(0x1fa)]+_0xf06863(0x1c3)+_0xf06863(0x1f9)+_0x157e83+_0xf06863(0x1ea)+clean(state[_0xf06863(0x1f0)])+_0xf06863(0x223)+_0x157e83+';\x20font-weight:600;\x27>'+clean(state['dia'])+_0xf06863(0x192)+_0xf06863(0x230)+_0x157e83+';\x20font-weight:600;\x27>'+_0x18b14b+_0xf06863(0x23c)+_0x14b1c9+_0xf06863(0x1ea)+_0x52f3ee+_0xf06863(0x1a8);const _0x38fd10=document['getElementById'](_0xf06863(0x1ec));_0x38fd10&&(_0x38fd10[_0xf06863(0x219)][_0xf06863(0x1bd)](_0xf06863(0x1dd)),void _0x38fd10[_0xf06863(0x23a)],requestAnimationFrame(()=>{const _0xb6cdc8=_0xf06863;_0x38fd10[_0xb6cdc8(0x219)][_0xb6cdc8(0x203)](_0xb6cdc8(0x1dd));})),document[_0xf06863(0x1ca)](_0xf06863(0x209))[_0xf06863(0x1fb)][_0xf06863(0x200)]=_0xf06863(0x1e2);}function hideConfirm(){const _0x1feeef=_0x42e206;document[_0x1feeef(0x1ca)](_0x1feeef(0x209))[_0x1feeef(0x1fb)]['display']=_0x1feeef(0x227);}function doSave(){const _0x497e75=_0x42e206;if(!selectedColor){showColorPickHint();return;}const _0x1c420e=toolCode(),_0x50bba8=selectedColor,_0x4c7259=_0x1c420e+_0x50bba8;if(!state[_0x497e75(0x236)][_0x4c7259])state[_0x497e75(0x236)][_0x4c7259]={'qty':0x0,'code':_0x1c420e,'color':_0x50bba8,'lengthVal':state[_0x497e75(0x1f0)],'diaVal':state[_0x497e75(0x1aa)],'modeVal':state[_0x497e75(0x1b7)],'timestamp':Date[_0x497e75(0x226)]()},state[_0x497e75(0x1b4)][_0x497e75(0x19f)](_0x4c7259);else{state['history'][_0x4c7259][_0x497e75(0x202)]=Date[_0x497e75(0x226)]();const _0x4fbcb0=state['historyOrder'][_0x497e75(0x23f)](_0x4c7259);if(_0x4fbcb0!==-0x1)state['historyOrder'][_0x497e75(0x1b2)](_0x4fbcb0,0x1);state[_0x497e75(0x1b4)][_0x497e75(0x19f)](_0x4c7259);}state[_0x497e75(0x236)][_0x4c7259][_0x497e75(0x1fa)]+=state['qty'],state[_0x497e75(0x1a7)]+=state[_0x497e75(0x1fa)],c1[_0x497e75(0x219)][_0x497e75(0x1bd)]('active'),c2[_0x497e75(0x219)][_0x497e75(0x1bd)](_0x497e75(0x1c7)),state['mode']=null,state['qty']=0x0,selectedColor=null,updateColorActiveUI(),updateTitleColor(),hideConfirm(),render(),save(),toast(_0x497e75(0x1b3));}function showClearConfirm(){const _0x565673=_0x42e206;document[_0x565673(0x1ca)]('clearConfirmPanel')[_0x565673(0x1fb)][_0x565673(0x200)]='flex';}function hideClearConfirm(){const _0x2f3bf1=_0x42e206;document[_0x2f3bf1(0x1ca)](_0x2f3bf1(0x1d0))['style'][_0x2f3bf1(0x200)]=_0x2f3bf1(0x227);}function doClear(){const _0x57b75d=_0x42e206;state={'limit':0x0,'used':0x0,'qty':0x0,'mode':null,'length':0x55,'dia':0x7,'history':{},'historyOrder':[]},selectedColor=null,localStorage['removeItem']('psfs_v50_color');if(L)L[_0x57b75d(0x1fc)]=0x55;if(D)D[_0x57b75d(0x1fc)]=0x7;c1[_0x57b75d(0x219)][_0x57b75d(0x1bd)](_0x57b75d(0x1c7)),c2['classList'][_0x57b75d(0x1bd)](_0x57b75d(0x1c7)),updateColorActiveUI(),updateTitleColor(),render(),toast(_0x57b75d(0x232)),hideClearConfirm();}function showDeleteConfirm(_0x414f63,_0x4a34d4){const _0x5cdb5b=_0x42e206;pendingDeleteKey=_0x414f63,pendingDeleteQty=_0x4a34d4,document[_0x5cdb5b(0x1ca)](_0x5cdb5b(0x1cf))['style'][_0x5cdb5b(0x200)]='flex';}function hideDeleteConfirm(){const _0x4ccd99=_0x42e206;document[_0x4ccd99(0x1ca)](_0x4ccd99(0x1cf))[_0x4ccd99(0x1fb)][_0x4ccd99(0x200)]=_0x4ccd99(0x227),pendingDeleteKey=null,pendingDeleteQty=null;}function doDelete(){const _0x348de9=_0x42e206;if(pendingDeleteKey){state['used']-=pendingDeleteQty,delete state['history'][pendingDeleteKey];const _0x4d59ab=state['historyOrder'][_0x348de9(0x23f)](pendingDeleteKey);if(_0x4d59ab!==-0x1)state[_0x348de9(0x1b4)][_0x348de9(0x1b2)](_0x4d59ab,0x1);render(),save(),toast(_0x348de9(0x1df));}hideDeleteConfirm();}function applyBlinking(){const _0x4dcded=_0x42e206;if(state[_0x4dcded(0x1bc)]===0x0){if(hintSpan&&hintSpan[_0x4dcded(0x1fb)]['display']!==_0x4dcded(0x227))triggerBlink(hintSpan);}if(state[_0x4dcded(0x1bc)]>=0x1&&state[_0x4dcded(0x1b7)]===null){if(c1)triggerBlink(c1);if(c2)triggerBlink(c2);}const _0x5b45a4=Object['values'](state['history'])[_0x4dcded(0x20a)]((_0x496efd,_0x28948c)=>_0x496efd+_0x28948c[_0x4dcded(0x1fa)],0x0);if(state['limit']>0x0&&_0x5b45a4===state['limit']){if(copyBtn&&!copyBtn[_0x4dcded(0x1e7)])triggerBlink(copyBtn);}}function render(){const _0x4efb8d=_0x42e206,_0x12c94f=document[_0x4efb8d(0x1ca)](_0x4efb8d(0x21d));if(state[_0x4efb8d(0x1bc)]>=0x1)_0x12c94f['style'][_0x4efb8d(0x200)]=_0x4efb8d(0x197);else _0x12c94f[_0x4efb8d(0x1fb)][_0x4efb8d(0x200)]=_0x4efb8d(0x227);document['getElementById'](_0x4efb8d(0x21e))[_0x4efb8d(0x1d9)]=state[_0x4efb8d(0x1bc)];state[_0x4efb8d(0x1bc)]===0x0?hintSpan[_0x4efb8d(0x1fb)][_0x4efb8d(0x200)]='inline-block':hintSpan[_0x4efb8d(0x1fb)]['display']=_0x4efb8d(0x227);document['getElementById']('Lv')[_0x4efb8d(0x1d9)]=state[_0x4efb8d(0x1f0)][_0x4efb8d(0x201)](0x1),document[_0x4efb8d(0x1ca)]('Dv')[_0x4efb8d(0x1d9)]=state['dia'][_0x4efb8d(0x201)](0x1);const _0x2e70ad=lenCode(state['length']),_0x4265b8=['XS','S','M','L','XL'],_0x102d30=['xs','s','m','l','xl'];document[_0x4efb8d(0x1ca)]('Lc')['innerText']=_0x4265b8[_0x2e70ad-0x1]+_0x4efb8d(0x214),document['getElementById']('Lc')['className']=_0x4efb8d(0x1f3)+_0x102d30[_0x2e70ad-0x1];if(state[_0x4efb8d(0x1b7)]!==null)dcSpan[_0x4efb8d(0x1d9)]=getDiameterText(),dcSpan['className']=getDiameterClass();else{if(state[_0x4efb8d(0x1bc)]===0x0)dcSpan['innerText']='直径',dcSpan[_0x4efb8d(0x19a)]=_0x4efb8d(0x19b);else state[_0x4efb8d(0x1bc)]>=0x1&&state['mode']===null?(dcSpan[_0x4efb8d(0x1d9)]=_0x4efb8d(0x1ad),dcSpan[_0x4efb8d(0x19a)]=_0x4efb8d(0x20f)):(dcSpan[_0x4efb8d(0x1d9)]='直径',dcSpan[_0x4efb8d(0x19a)]=_0x4efb8d(0x19b));}document[_0x4efb8d(0x1ca)]('q')[_0x4efb8d(0x1d9)]=state[_0x4efb8d(0x1fa)],renderPreviewText(),document[_0x4efb8d(0x1ca)](_0x4efb8d(0x228))['innerHTML']=state[_0x4efb8d(0x1a7)]+'/'+state[_0x4efb8d(0x1bc)];const _0x13e4ff=state[_0x4efb8d(0x1b7)]!==null,_0x4aafee=state['limit']>=0x1;qtyMinusBtn&&qtyPlusBtn&&(qtyMinusBtn['disabled']=![],qtyPlusBtn[_0x4efb8d(0x1e7)]=![],qtyMinusBtn['classList'][_0x4efb8d(0x1bd)](_0x4efb8d(0x22c)),qtyPlusBtn[_0x4efb8d(0x219)][_0x4efb8d(0x1bd)](_0x4efb8d(0x22c)));document[_0x4efb8d(0x1af)](_0x4efb8d(0x208))[_0x4efb8d(0x210)](_0x1ee2b3=>_0x1ee2b3[_0x4efb8d(0x1e7)]=!_0x4aafee),document['querySelectorAll'](_0x4efb8d(0x222))['forEach'](_0x31e27f=>_0x31e27f['disabled']=!(_0x4aafee&&_0x13e4ff));if(D)D[_0x4efb8d(0x1e7)]=!(_0x4aafee&&_0x13e4ff);if(L)L[_0x4efb8d(0x1e7)]=!(_0x4aafee&&_0x13e4ff);document[_0x4efb8d(0x1af)](_0x4efb8d(0x234))[_0x4efb8d(0x210)](_0x9c05d7=>_0x9c05d7['disabled']=!(_0x4aafee&&_0x13e4ff));const _0x4e795a=_0x4aafee&&_0x13e4ff&&selectedColor&&state[_0x4efb8d(0x1fa)]>0x0;genBtn[_0x4efb8d(0x1e7)]=!_0x4e795a;const _0x228a15=document[_0x4efb8d(0x1af)](_0x4efb8d(0x19c));_0x228a15[_0x4efb8d(0x210)](_0xd1bab4=>{const _0x48e40b=_0x4efb8d;_0x4aafee&&_0x13e4ff?(_0xd1bab4['style'][_0x48e40b(0x1a4)]='auto',_0xd1bab4[_0x48e40b(0x219)][_0x48e40b(0x1bd)](_0x48e40b(0x1e7))):(_0xd1bab4[_0x48e40b(0x1fb)][_0x48e40b(0x1a4)]=_0x48e40b(0x227),_0xd1bab4['classList'][_0x48e40b(0x203)](_0x48e40b(0x1e7)));});const _0x78b02b=Object[_0x4efb8d(0x22e)](state[_0x4efb8d(0x236)])[_0x4efb8d(0x20a)]((_0x558533,_0xefdaaf)=>_0x558533+_0xefdaaf[_0x4efb8d(0x1fa)],0x0);copyBtn[_0x4efb8d(0x1e7)]=_0x78b02b!==state[_0x4efb8d(0x1bc)],drawHistory(),applyBlinking(),updateColorActiveUI(),updateTitleColor(),save();}function drawHistory(){const _0x214f45=_0x42e206,_0x2afad6=document['getElementById'](_0x214f45(0x236));_0x2afad6[_0x214f45(0x213)]='';const _0x6a9c98=state[_0x214f45(0x1b4)]||[];for(const _0x379346 of _0x6a9c98){const _0x403acf=state['history'][_0x379346];if(!_0x403acf)continue;const _0x151aea=document[_0x214f45(0x1bf)]('div');_0x151aea['className']=_0x214f45(0x19e);const _0x53b1b1=_0x403acf['qty'],_0x22dbab=clean(_0x403acf[_0x214f45(0x1bb)]),_0x5d2c01=clean(_0x403acf['diaVal']),_0x337ecd=_0x403acf[_0x214f45(0x1a1)]==='clipped'?'有笔夹':_0x214f45(0x1f2),_0x57bb95=COLOR_DISPLAY_MAP[_0x403acf[_0x214f45(0x194)]]||_0x403acf[_0x214f45(0x194)],_0x1a0b7b=COLOR_TEXT_MAP[_0x403acf[_0x214f45(0x194)]]||_0x214f45(0x1b0),_0x110f48=document[_0x214f45(0x1bf)](_0x214f45(0x1d2));_0x110f48[_0x214f45(0x19a)]=_0x214f45(0x218),_0x110f48[_0x214f45(0x213)]=_0x214f45(0x1e3)+_0x403acf[_0x214f45(0x1cc)]+_0x214f45(0x198)+_0x53b1b1+_0x214f45(0x1e9)+_0x22dbab+_0x214f45(0x1d6)+_0x5d2c01+_0x214f45(0x1da)+_0x337ecd+_0x214f45(0x1ce)+_0x1a0b7b+_0x214f45(0x21c)+_0x57bb95+_0x214f45(0x1b6);const _0x2a6f24=document[_0x214f45(0x1bf)]('button');_0x2a6f24[_0x214f45(0x19a)]=_0x214f45(0x21f),_0x2a6f24[_0x214f45(0x1d9)]='删除',_0x2a6f24['onclick']=_0x5904dc=>{const _0xc8e1fa=_0x214f45;_0x5904dc[_0xc8e1fa(0x1db)](),showDeleteConfirm(_0x379346,_0x403acf[_0xc8e1fa(0x1fa)]);},_0x151aea[_0x214f45(0x1e0)](_0x110f48),_0x151aea[_0x214f45(0x1e0)](_0x2a6f24),_0x2afad6[_0x214f45(0x1e0)](_0x151aea);}}function copy(){const _0x10627c=_0x42e206,_0x31ee0d=Object['values'](state[_0x10627c(0x236)])[_0x10627c(0x20a)]((_0x2e5dd8,_0x353073)=>_0x2e5dd8+_0x353073['qty'],0x0);if(_0x31ee0d!==state['limit']){toast(_0x10627c(0x1b5));return;}if(!Object['keys'](state[_0x10627c(0x236)])[_0x10627c(0x1f0)])return;const _0x1b3665=[];for(const _0x4935fb in state[_0x10627c(0x236)]){const _0x52709e=state[_0x10627c(0x236)][_0x4935fb],_0x1911e3=parseInt(_0x52709e['code'],0xa);_0x1b3665['push']({'codeNum':_0x1911e3,'code':_0x52709e[_0x10627c(0x1cc)],'qty':_0x52709e[_0x10627c(0x1fa)],'lengthVal':_0x52709e['lengthVal'],'diaVal':_0x52709e['diaVal'],'modeVal':_0x52709e[_0x10627c(0x1a1)],'color':_0x52709e[_0x10627c(0x194)]});}_0x1b3665[_0x10627c(0x20c)]((_0x327a48,_0x240fa4)=>_0x240fa4['codeNum']-_0x327a48['codeNum']);let _0x5251d0=_0x10627c(0x1ee)+state['used']+'/'+state['limit']+'\x0a\x0a';for(const _0x105318 of _0x1b3665){const _0x5f27a7=_0x105318[_0x10627c(0x1a1)]===_0x10627c(0x1a3)?_0x10627c(0x231):_0x10627c(0x1f2),_0x3b7c45=COLOR_DISPLAY_MAP[_0x105318['color']]||_0x105318['color'];_0x5251d0+=_0x105318['code']+_0x10627c(0x1f6)+_0x105318[_0x10627c(0x1fa)]+_0x10627c(0x1ef)+clean(_0x105318['lengthVal'])+'-Ø'+clean(_0x105318[_0x10627c(0x1c4)])+'-'+_0x5f27a7+'-'+_0x3b7c45+')\x0a';}navigator['clipboard'][_0x10627c(0x1ff)](_0x5251d0),toast(_0x10627c(0x1ae));}function toast(_0x372cd9){const _0x5533e0=_0x42e206,_0x18e6d1=document['getElementById'](_0x5533e0(0x22f));_0x18e6d1[_0x5533e0(0x1d9)]=_0x372cd9,_0x18e6d1['style']['opacity']=0x1,setTimeout(()=>_0x18e6d1[_0x5533e0(0x1fb)][_0x5533e0(0x1d4)]=0x0,0x5dc);}function _0x3332(){const _0x1973c9=['diaVal','Extra\x20Wide','max','active','toggle','已达上限','getElementById','Red','code','isInteger','</span>-<span\x20class=\x22color-name-in-history\x22\x20style=\x22color:\x20','deleteConfirmPanel','clearConfirmPanel','return\x20(function()\x20','span','数量为0','opacity','animation','</span>-Ø<span\x20class=\x22highlight-number\x22>','mousedown','3841900xoOSUJ','innerText','</span>-\x0a\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-number\x22>','stopPropagation','confirmText','blink','48AfxveV','已删除','appendChild','Wide','flex','\x0a\x20\x20\x20\x20\x20\x20','#f97316','__proto__','乌木黑','disabled','colorLabel','</span>\x20\x0a\x20\x20\x20\x20\x20\x20(L<span\x20class=\x22highlight-number\x22>',';\x20font-weight:600;\x27>','addEventListener','confirmHint','charCodeAt','已配置\x20','\x20(L','length','oninput','无笔夹','tag\x20','offsetHeight','15291400eRmcuh','\x20×\x20','Nero','apply','\x20(L<span\x20style=\x27color:','qty','style','value','stringify','min','writeText','display','toFixed','timestamp','add','preview','exception','Yellow','psfs_v50_color','.card:nth-of-type(2)\x20.switch\x20button','confirmPanel','reduce','clipless','sort','Caramel','请选择笔夹类型','tag\x20mode-hint','forEach','click','setItem','innerHTML','\x20(150~165\x20mm)','prototype','4178WacuEQ','getItem','item-code','classList','313AqRDlO','info',';\x22>','supportedQtyTitle','limitVal','del','includes','mouseleave','.card:nth-of-type(2)\x20.capsule-stepper\x20button','</span>-Ø<span\x20style=\x27color:','#c47a44','ontouchstart','now','none','previewCount','warn','<span\x20style=\x22color:\x20','trace','qty-btn-disabled','{}.constructor(\x22return\x20this\x22)(\x20)','values','toast','<span\x20style=\x27color:','有笔夹','已清空','(((.+)+)+)+$','.card:nth-of-type(3)\x20.capsule-stepper\x20button','console','history','12896ZGtHmn','maxTouchPoints','target','offsetWidth','Ultra\x20Slim','</span>-<span\x20style=\x27color:','filter','2295342eesRVf','indexOf','</span>-','data-color','color','请先设置支持数量','constructor','block','\x20×\x20<span\x20class=\x22highlight-number\x22>','mouseup','className','tag','.color-chip','error','item','push','bind','modeVal','colorSelectTitle','clipped','pointerEvents','toString','qtyMinusBtn','used','</span>)','qtyPlusBtn','dia','\x20×\x20<span\x20style=\x27color:','#e5c07b','选择笔夹类型','已复制','querySelectorAll','#ffb347','copyBtn','splice','已添加配置','historyOrder','配置完成时才可复制','</span>)\x0a\x20\x20\x20\x20','mode','732529TPJdke','3OEnqKb','getAttribute','lengthVal','limit','remove','Micro','createElement','1536904AlvAem','selectedColor','search','</span>'];_0x3332=function(){return _0x1973c9;};return _0x3332();}document['addEventListener'](_0x42e206(0x211),_0x2a0b62=>{const _0x58d16f=_0x42e206;_0x2a0b62[_0x58d16f(0x239)]&&_0x2a0b62[_0x58d16f(0x239)]['tagName']==='BUTTON'&&stopBlinking();});function enableLongPressStepper(){const _0xbf7e59=_0x42e206,_0x293003=_0xbf7e59(0x225)in window||navigator[_0xbf7e59(0x238)]>0x0;document['querySelectorAll']('.capsule-stepper\x20button')[_0xbf7e59(0x210)](_0xfca3fd=>{const _0x316e31=_0xbf7e59;if(_0x293003)return;let _0x3ffa36=null;const _0x5daa08=()=>{if(_0x3ffa36)return;_0x3ffa36=setTimeout(()=>{const _0x3111f9=_0x4e8a;_0x3ffa36=setInterval(()=>_0xfca3fd[_0x3111f9(0x211)](),0x50);},0x12c);},_0x35ddc5=()=>{clearTimeout(_0x3ffa36),clearInterval(_0x3ffa36),_0x3ffa36=null;};_0xfca3fd[_0x316e31(0x1eb)](_0x316e31(0x1d7),_0x5daa08),_0xfca3fd[_0x316e31(0x1eb)](_0x316e31(0x199),_0x35ddc5),_0xfca3fd[_0x316e31(0x1eb)](_0x316e31(0x221),_0x35ddc5);});}initColorSelector(),render(),enableLongPressStepper();
+</script>
+
+</body>
+</html>
