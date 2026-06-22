@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>笔套适配系统 V5.0</title>
+  <style>
+    /* ========== 所有样式保持不变 ========== */
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+      background:#000000;
+      color:#e5e7eb;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    .app{
+      width:100%;
+      max-width:480px;
+      padding:16px;
+      box-sizing: border-box;
+    }
+
+    h1{
+      text-align:center;
+      font-size:20px;
+      font-weight:600;
+      color:#f0f0f0;
+      text-shadow:0 0 2px rgba(255,255,255,0.2);
+    }
+
+    .card{
+      background:#0c0c0c;
+      border-radius:18px;
+      border:1px solid #3a4a6a;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+      padding:10px 14px;
+      margin-bottom:10px;
+      transition: border-color 0.1s ease;
+    }
+
+    .card:hover{
+      border-color:#5a7a9a;
+    }
+
+    input[type="range"]{
+      width:100%;
+      margin-top:10px;
+      height:10px;
+      -webkit-appearance: none;
+      background:#2a2e3a;
+      border-radius:10px;
+      outline: none;
+    }
+    input[type="range"]:focus{
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f97316;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 6px #f97316;
+      cursor: pointer;
+    }
+
+    .row{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:6px;
+    }
+
+    .stepper-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .stepper-row .stepper-label {
+      font-size: 18px;
+    }
+    .stepper-row .capsule-stepper {
+      margin-left: auto;
+    }
+
+    .first-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      flex-wrap: nowrap;
+    }
+    .first-row .capsule-stepper {
+      flex-shrink: 0;
+    }
+    .first-row .stitch-group {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .stitch-btn {
+      padding: 8px 14px 10px 14px;
+      font-size: 18px;
+      border-radius: 40px;
+      border: 1px solid #4b5563;
+      background: #0a0a0a;
+      color: #fff;
+      font-weight: 400;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      height: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stitch-btn:hover:not(.active) {
+      background: #2a2a2a;
+      border-color: #6b7280;
+    }
+    .stitch-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+      box-shadow: 0 0 8px #3b82f6;
+    }
+    .stitch-btn.disabled {
+      cursor: pointer;
+    }
+    .stitch-btn.pending {
+      animation: slowBlinkOnce 2.4s ease-in-out 1;
+      border-color: #4b5563;
+    }
+    .stitch-btn.active {
+      animation: none;
+    }
+
+    @keyframes slowBlinkOnce {
+      0% { opacity: 1; }
+      25% { opacity: 0.25; }
+      50% { opacity: 1; }
+      75% { opacity: 0.25; }
+      100% { opacity: 1; }
+    }
+
+    .big{
+      font-size:24px;
+      font-weight:400;
+    }
+
+    .tag{
+      font-size:18px;
+      font-weight:600;
+      padding:6px 12px;
+      border-radius: 40px;
+      background:#1a1a1a;
+      text-align:center;
+      border: 1px solid #3a3f4e;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 12px;
+    }
+
+    .tag.xs{background:#2b6e3c; border-color:#6fbf4c;}
+    .tag.s{background:#1e5a8a; border-color:#3b82f6;}
+    .tag.m{background:#6b21a5; border-color:#c084fc;}
+    .tag.l{background:#b45309; border-color:#f97316;}
+    .tag.xl{background:#9b2c2c; border-color:#ef4444;}
+
+    .tag.d1{background:#0e6b8f; border-color:#22d3ee;}
+    .tag.d2{background:#0f766e; border-color:#2dd4bf;}
+    .tag.d3{background:#a16207; border-color:#facc15;}
+    .tag.d4{background:#c2410c; border-color:#fb923c;}
+    .tag.d5{background:#b91c1c; border-color:#f87171;}
+    .tag.d6{background:#a21caf; border-color:#e879f9;}
+    .tag.d7{background:#7c3aed; border-color:#a78bfa;}
+
+    .tag.mode-hint {
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid #ffb347;
+      box-shadow: 0 0 6px rgba(249,115,22,0.4);
+      border-radius: 40px;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 12px;
+    }
+
+    .capsule-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #0a0a0c;
+      padding: 3px 6px;
+      border-radius: 40px;
+      border: 1px solid #2a2e3f;
+      height: 36px;
+      font-size: 0;
+      transition: border-color 0.1s ease;
+    }
+
+    .capsule-stepper button {
+      background: #1c1c22;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: 0.1s linear;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .capsule-stepper button:active {
+      transform: scale(0.92);
+      background: #2c2c34;
+    }
+
+    .capsule-stepper .value {
+      font-size: 1.25rem;
+      font-weight: 500;
+      text-align: center;
+      color: #facc15;
+      min-width: auto;
+      padding: 0 2px;
+      white-space: nowrap;
+    }
+
+    .capsule-stepper button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+      transform: none;
+    }
+
+    /* 胶囊步进器慢闪动画 */
+    @keyframes capsuleBlink {
+      0% { border-color: #2a2e3f; }
+      25% { border-color: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.3); }
+      50% { border-color: #2a2e3f; }
+      75% { border-color: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.3); }
+      100% { border-color: #2a2e3f; }
+    }
+
+    .capsule-stepper.blink {
+      animation: capsuleBlink 2.4s ease-in-out 1;
+    }
+
+    #limitVal,
+    #q {
+      font-size: 1.25rem;
+      font-weight: 500;
+      text-align: center;
+      color: #facc15;
+      min-width: auto;
+      padding: 0 2px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .switch{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .switch button{
+      width:40px;
+      height:40px;
+      padding:0;
+      font-size:17px;
+      font-weight:600;
+      border-radius:50%;
+      border:2px solid #4b5563;
+      background:#0a0a0a;
+      color:#fff;
+      transition: all 0.2s ease;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    .switch button:hover:not(.active) {
+      background: #2a2a2a;
+      border-color: #6b7280;
+    }
+
+    .switch button.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+      box-shadow: 0 0 10px rgba(59,130,246,0.5);
+    }
+
+    .switch button:disabled {
+      opacity:0.4;
+      cursor:not-allowed;
+      pointer-events:none;
+    }
+
+    .color-module-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .color-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 18px;
+      font-weight: 500;
+      color: #e5e7eb;
+      background: transparent;
+      padding: 0;
+      border: none;
+    }
+    .color-label-icon {
+      font-size: 18px;
+    }
+    .color-label-text {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    @keyframes slowBlink {
+      0% { opacity: 1; }
+      25% { opacity: 0.25; }
+      50% { opacity: 1; }
+      75% { opacity: 0.25; }
+      100% { opacity: 1; }
+    }
+    #hint.blink, #c1.blink, #c2.blink, #c3.blink, #copyBtn.blink, .color-label.blink, .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+    .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+    .color-chips-group {
+      display: flex;
+      gap: 10px;
+    }
+    .color-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 36px;
+      transition: 0.08s linear;
+      cursor: pointer;
+      overflow: visible;
+      flex-shrink: 0;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .color-chip img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      border-radius: 50%;
+      position: relative;
+      z-index: 1;
+    }
+    .color-chip.no-image {
+      background-size: 60%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .color-chip .custom-tooltip {
+      position: absolute;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      line-height: 1.3;
+      font-family: inherit;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .color-chip:hover .custom-tooltip {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    .color-chip.active {
+      outline: 3px solid #facc15;
+      outline-offset: 2px;
+      transform: scale(0.96);
+    }
+    .color-chip.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+      .color-chip .custom-tooltip {
+        padding: 6px 14px;
+        font-size: 14px;
+        bottom: 42px;
+      }
+    }
+
+    .color-name-in-history {
+      font-weight: 400;
+      margin-left: 0px;
+      white-space: nowrap;
+    }
+
+    .item{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0e0e12;
+      border: 1px solid #2d3345;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 18px;
+      line-height: 1.4;
+      gap: 10px;
+      transition: border 0.1s;
+    }
+    .item:hover{
+      border-color: #f97316;
+    }
+
+    .item-code {
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px;
+      flex: 1;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .highlight-number {
+      color: #f97316;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .del{
+      background: #2a2a2a;
+      border: 1px solid #4b5563;
+      color: #e5e7eb;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .del:hover{
+      background: #f97316;
+      border-color: #ffb347;
+      color: #0b0f17;
+    }
+
+    .bottom{
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      display:flex;
+      justify-content:center;
+      background:linear-gradient(to top, #000000, transparent);
+      padding-bottom:16px;
+      padding-top:12px;
+      box-sizing:border-box;
+    }
+
+    .bottom-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 0 16px;
+      box-sizing: border-box;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .bottom button {
+      flex: 1;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: transform 0.05s linear;
+    }
+
+    .bottom button:active {
+      transform: scale(0.97);
+    }
+
+    .bottom button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #genBtn {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 2px 8px #1e3a8a;
+    }
+    #copyBtn {
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+      border: 1px solid #ffb366;
+    }
+    #clearBtn {
+      background: #dc2626;
+      color: white;
+      box-shadow: 0 2px 6px #7f1a1a;
+    }
+
+    .toast{
+      position:fixed;
+      bottom:90px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#1f2937;
+      backdrop-filter: blur(8px);
+      color:#facc15;
+      padding:10px 18px;
+      border-radius:40px;
+      font-weight:600;
+      border-left: 3px solid #f97316;
+      opacity:0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 200;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    #confirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #confirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #confirmText {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: break-word;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 14px;
+      padding: 14px 16px;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    #confirmHint {
+      font-size: 20px;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    #confirmHint.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+
+    .confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #confirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #confirmSave {
+      background:#22c55e;
+      color:#000;
+    }
+
+    #clearConfirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #clearConfirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #clearConfirmText {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: keep-all;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 40px;
+      padding: 10px 20px;
+      width: auto;
+      display: inline-block;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .clear-confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .clear-confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #clearConfirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #clearConfirmOK {
+      background:#22c55e;
+      color:#000;
+    }
+
+    #deleteConfirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #deleteConfirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #deleteConfirmText {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: keep-all;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 40px;
+      padding: 10px 20px;
+      width: auto;
+      display: inline-block;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .delete-confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .delete-confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #deleteConfirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #deleteConfirmOK {
+      background:#dc2626;
+      color:#fff;
+    }
+
+    #historyPanel {
+      width:100%;
+      max-width:480px;
+      margin:0 auto;
+      box-sizing:border-box;
+      padding-bottom:120px;
+    }
+
+    #previewCount {
+      color: #FCD34D;
+      font-weight: 400;
+      letter-spacing: 3px;
+    }
+
+    #preview {
+      text-align: center;
+      font-weight: 600;
+      background: transparent;
+      padding: 12px 0;
+      border: none;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 12px 0 0 0;
+    }
+
+    #previewCard .row div[style*="font-size:18px"] {
+      font-weight: 400 !important;
+    }
+
+    #previewCard .row label {
+      font-weight: 400 !important;
+    }
+
+    .hint{
+      font-size:16px;
+      font-weight:600;
+      color:#FCD34D;
+      white-space:nowrap;
+      transform: translateX(-6px);
+    }
+
+    #hint.blink, #c1.blink, #c2.blink, #c3.blink, #copyBtn.blink, .color-label.blink, .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+
+    #Lc{
+      font-size:20px;
+    }
+
+    #Dc{
+      font-size:20px;
+    }
+
+    #copyBtn {
+      border: 2px solid #f97316;
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+    }
+
+    #supportedQtyTitle {
+      font-weight: 600 !important;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <h1>✒️ 笔套适配系统 V5.0</h1>
+
+  <div class="card">
+    <div class="first-row">
+      <div class="capsule-stepper" id="qtyStepper" style="margin:0;">
+        <button onclick="setLimit(-1)">–</button>
+        <span class="value" id="limitVal">0</span>
+        <button onclick="setLimit(1)">+</button>
+      </div>
+      <div class="stitch-group">
+        <button class="stitch-btn disabled" id="crossBtn" onclick="selectStitch('cross')">交叉缝</button>
+        <button class="stitch-btn disabled" id="saddleBtn" onclick="selectStitch('saddle')">马鞍缝</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <input type="range" id="D" min="7" max="18.5" step="0.1" value="7">
+    <div style="margin-top:12px;">
+      <div class="stepper-row">
+        <div class="switch" style="margin:0;gap:8px;">
+          <button id="c1" onclick="mode('clipless')">N</button>
+          <button id="c2" onclick="mode('clipped')">S</button>
+          <button id="c3" onclick="mode('w_clip')">W</button>
+        </div>
+        <div class="capsule-stepper" style="margin:0;">
+          <button id="diaMinusBtn" onclick="diaStep(-0.1)">–</button>
+          <span class="value" id="Dv">7.0</span>
+          <button id="diaPlusBtn" onclick="diaStep(0.1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="tag" id="Dc" style="margin-top:12px;text-align:center;"></div>
+  </div>
+
+  <div class="card">
+    <input type="range" min="85" max="165" step="1" value="85" id="L">
+    <div class="stepper-row" style="margin-top:12px;">
+      <div class="stepper-label">📏 长度</div>
+      <div class="capsule-stepper" style="margin:0;">
+        <button onclick="lenStep(-0.1)">–</button>
+        <span class="value" id="Lv">85.0</span>
+        <button onclick="lenStep(0.1)">+</button>
+      </div>
+    </div>
+    <div class="tag" id="Lc" style="margin-top:12px;text-align:center;"></div>
+  </div>
+
+  <div class="card" id="colorCard">
+    <div class="color-module-row">
+      <div class="color-label" id="colorLabel">
+        <span class="color-label-icon">🎨</span>
+        <span class="color-label-text">皮革</span>
+      </div>
+      <div class="color-chips-group" id="colorChipsGroup">
+        <div class="color-chip" data-color="Caramel" style="background-color: #c68a4e;">
+          <img src="images/Caramel.png" alt="Caramel" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #c68a4e;">焦糖色</span>
+        </div>
+        <div class="color-chip" data-color="Yellow" style="background-color: #f5d742;">
+          <img src="images/Yellow.png" alt="Yellow" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #f5d742;">黄色</span>
+        </div>
+        <div class="color-chip" data-color="Nero" style="background-color: #4a4a4a;">
+          <img src="images/Nero.png" alt="Nero" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #4a4a4a;">乌木黑</span>
+        </div>
+        <div class="color-chip" data-color="Red" style="background-color: #d43030;">
+          <img src="images/Red.png" alt="Red" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #d43030;">红色</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="previewCard">
+    <div class="stepper-row">
+      <div class="stepper-label">
+        <label style="font-size:20px;">✨ 适配预览</label>
+        <div class="big" id="previewCount" style="font-size:22px; display:inline-block; margin-left:6px;"></div>
+      </div>
+      <div class="capsule-stepper" style="margin:0;">
+        <button id="qtyMinusBtn" class="qty-control-btn" onclick="handleQtyChange(-1)">–</button>
+        <span class="value" id="q">0</span>
+        <button id="qtyPlusBtn" class="qty-control-btn" onclick="handleQtyChange(1)">+</button>
+      </div>
+    </div>
+    <div id="preview" style="font-size:26px; word-break:break-word;"></div>
+  </div>
+
+  <div id="historyPanel">
+    <div id="history"></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bottom-container">
+      <div class="bottom-buttons">
+        <button id="genBtn" onclick="showConfirm()">保存</button>
+        <button id="copyBtn" onclick="copy()" disabled>复制</button>
+        <button id="clearBtn" onclick="showClearConfirm()">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div id="confirmPanel">
+    <div id="confirmBox">
+      <div id="confirmText"></div>
+      <div id="confirmHint">请确认</div>
+      <div class="confirm-btns">
+        <button id="confirmCancel" onclick="hideConfirm()">取消</button>
+        <button id="confirmSave" onclick="doSave()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="clearConfirmPanel">
+    <div id="clearConfirmBox">
+      <div id="clearConfirmText">清除所有数据吗？</div>
+      <div class="clear-confirm-btns">
+        <button id="clearConfirmCancel" onclick="hideClearConfirm()">取消</button>
+        <button id="clearConfirmOK" onclick="doClear()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteConfirmPanel">
+    <div id="deleteConfirmBox">
+      <div id="deleteConfirmText">删除此配置吗？</div>
+      <div class="delete-confirm-btns">
+        <button id="deleteConfirmCancel" onclick="hideDeleteConfirm()">取消</button>
+        <button id="deleteConfirmOK" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const _0x5731b2=_0x1765;(function(_0x5ec3dd,_0xf39a9e){const _0x50b7f6=_0x1765,_0x240a73=_0x5ec3dd();while(!![]){try{const _0x2c2601=-parseInt(_0x50b7f6(0x1e1))/0x1+-parseInt(_0x50b7f6(0x1bd))/0x2+parseInt(_0x50b7f6(0x1b7))/0x3+-parseInt(_0x50b7f6(0x1dc))/0x4+parseInt(_0x50b7f6(0x1dd))/0x5*(parseInt(_0x50b7f6(0x1bf))/0x6)+parseInt(_0x50b7f6(0x243))/0x7+parseInt(_0x50b7f6(0x18c))/0x8;if(_0x2c2601===_0xf39a9e)break;else _0x240a73['push'](_0x240a73['shift']());}catch(_0xcbaec4){_0x240a73['push'](_0x240a73['shift']());}}}(_0x16ea,0x4d567));const _0x1656c9=(function(){let _0x238b1e=!![];return function(_0xc5bf80,_0x4cf308){const _0x58e050=_0x238b1e?function(){const _0x56f148=_0x1765;if(_0x4cf308){const _0x2d0c30=_0x4cf308[_0x56f148(0x225)](_0xc5bf80,arguments);return _0x4cf308=null,_0x2d0c30;}}:function(){};return _0x238b1e=![],_0x58e050;};}()),_0x47d342=_0x1656c9(this,function(){const _0x62cbcb=_0x1765;return _0x47d342['toString']()['search'](_0x62cbcb(0x195))[_0x62cbcb(0x208)]()['constructor'](_0x47d342)[_0x62cbcb(0x1d8)](_0x62cbcb(0x195));});_0x47d342();const _0x1b92f5=(function(){let _0x2b5126=!![];return function(_0x8d28c5,_0x442055){const _0x54f30b=_0x2b5126?function(){const _0x36f111=_0x1765;if(_0x442055){const _0x8faab5=_0x442055[_0x36f111(0x225)](_0x8d28c5,arguments);return _0x442055=null,_0x8faab5;}}:function(){};return _0x2b5126=![],_0x54f30b;};}()),_0x95984e=_0x1b92f5(this,function(){const _0x946d0c=_0x1765,_0x46dbab=function(){const _0xe41fa7=_0x1765;let _0xd4568;try{_0xd4568=Function(_0xe41fa7(0x1b8)+_0xe41fa7(0x234)+');')();}catch(_0x456942){_0xd4568=window;}return _0xd4568;},_0x4688a4=_0x46dbab(),_0x33e1be=_0x4688a4[_0x946d0c(0x214)]=_0x4688a4['console']||{},_0x57b4d6=[_0x946d0c(0x1d4),_0x946d0c(0x22b),_0x946d0c(0x248),_0x946d0c(0x197),_0x946d0c(0x1a9),_0x946d0c(0x1f1),_0x946d0c(0x1e5)];for(let _0x135008=0x0;_0x135008<_0x57b4d6['length'];_0x135008++){const _0x401eb5=_0x1b92f5[_0x946d0c(0x1c8)][_0x946d0c(0x206)][_0x946d0c(0x247)](_0x1b92f5),_0x3cf8a6=_0x57b4d6[_0x135008],_0x489467=_0x33e1be[_0x3cf8a6]||_0x401eb5;_0x401eb5[_0x946d0c(0x239)]=_0x1b92f5[_0x946d0c(0x247)](_0x1b92f5),_0x401eb5[_0x946d0c(0x208)]=_0x489467[_0x946d0c(0x208)]['bind'](_0x489467),_0x33e1be[_0x3cf8a6]=_0x401eb5;}});_0x95984e();function clean(_0x54ca4a){const _0x506e70=_0x1765;return Number['isInteger'](_0x54ca4a)?_0x54ca4a[_0x506e70(0x208)]():_0x54ca4a['toFixed'](0x1);}let stitchType=null;function selectStitch(_0x34f40b){const _0x442fb1=_0x1765;if(state['used']===state[_0x442fb1(0x24b)]&&state[_0x442fb1(0x24b)]>0x0){toast(_0x442fb1(0x1bc)),render();return;}if(state[_0x442fb1(0x24b)]===0x0){toast('请先设置数量'),triggerCapsuleBlink();return;}if(stitchType===_0x34f40b)return;stitchType=_0x34f40b,updateStitchButtons(),applyModeConstraints(),render(),save();}function updateStitchButtons(){const _0x26709a=_0x1765,_0x4b1949=document[_0x26709a(0x224)](_0x26709a(0x1e7)),_0x465a49=document['getElementById']('saddleBtn');if(!_0x4b1949||!_0x465a49)return;if(state['limit']===0x0){_0x4b1949[_0x26709a(0x1ed)]['add'](_0x26709a(0x1ca)),_0x465a49[_0x26709a(0x1ed)][_0x26709a(0x1fe)](_0x26709a(0x1ca)),_0x4b1949[_0x26709a(0x1ed)][_0x26709a(0x18b)](_0x26709a(0x216),_0x26709a(0x1c7)),_0x465a49['classList'][_0x26709a(0x18b)]('pending',_0x26709a(0x1c7));return;}_0x4b1949[_0x26709a(0x1ed)][_0x26709a(0x18b)]('disabled'),_0x465a49[_0x26709a(0x1ed)][_0x26709a(0x18b)]('disabled');if(stitchType===_0x26709a(0x1f3))_0x4b1949[_0x26709a(0x1ed)][_0x26709a(0x1fe)](_0x26709a(0x1c7)),_0x4b1949[_0x26709a(0x1ed)]['remove'](_0x26709a(0x216)),_0x465a49[_0x26709a(0x1ed)]['remove'](_0x26709a(0x1c7),_0x26709a(0x216));else stitchType===_0x26709a(0x19b)?(_0x465a49[_0x26709a(0x1ed)]['add'](_0x26709a(0x1c7)),_0x465a49[_0x26709a(0x1ed)][_0x26709a(0x18b)]('pending'),_0x4b1949['classList'][_0x26709a(0x18b)](_0x26709a(0x1c7),_0x26709a(0x216))):(_0x4b1949[_0x26709a(0x1ed)][_0x26709a(0x18b)](_0x26709a(0x1c7)),_0x465a49[_0x26709a(0x1ed)]['remove']('active'),_0x4b1949[_0x26709a(0x1ed)]['add'](_0x26709a(0x216)),_0x465a49[_0x26709a(0x1ed)][_0x26709a(0x1fe)](_0x26709a(0x216)));}function flashStitchButtons(){const _0x484430=_0x1765,_0x3014e9=document['getElementById'](_0x484430(0x1e7)),_0x117c36=document[_0x484430(0x224)](_0x484430(0x1d3));if(!_0x3014e9||!_0x117c36)return;if(state[_0x484430(0x24b)]===0x0)return;if(stitchType!==null)return;_0x3014e9['classList'][_0x484430(0x18b)](_0x484430(0x216)),void _0x3014e9[_0x484430(0x22a)],_0x3014e9[_0x484430(0x1ed)]['add'](_0x484430(0x216)),_0x117c36['classList'][_0x484430(0x18b)](_0x484430(0x216)),void _0x117c36[_0x484430(0x22a)],_0x117c36[_0x484430(0x1ed)][_0x484430(0x1fe)](_0x484430(0x216)),setTimeout(()=>{const _0x34fc37=_0x484430;_0x3014e9[_0x34fc37(0x1ed)]['remove'](_0x34fc37(0x216)),_0x117c36[_0x34fc37(0x1ed)][_0x34fc37(0x18b)](_0x34fc37(0x216));},0x9c4);}function showColorPickHint(){const _0xc21b07=_0x1765,_0x2c3cd8=document['getElementById'](_0xc21b07(0x1ae)),_0x43b81c=document[_0xc21b07(0x1fb)](_0xc21b07(0x1ab));_0x2c3cd8&&(_0x2c3cd8[_0xc21b07(0x20c)][_0xc21b07(0x223)]=_0xc21b07(0x244),_0x2c3cd8['offsetHeight'],_0x2c3cd8['style'][_0xc21b07(0x223)]='',_0x2c3cd8[_0xc21b07(0x1ed)]['add'](_0xc21b07(0x1db)),setTimeout(()=>{const _0x142781=_0xc21b07;_0x2c3cd8[_0x142781(0x1ed)][_0x142781(0x18b)](_0x142781(0x1db));},0x960)),_0x43b81c['forEach'](_0x1d53d8=>{const _0x5d5042=_0xc21b07;_0x1d53d8[_0x5d5042(0x20c)][_0x5d5042(0x223)]=_0x5d5042(0x244),_0x1d53d8[_0x5d5042(0x188)],_0x1d53d8[_0x5d5042(0x20c)]['animation']='',_0x1d53d8[_0x5d5042(0x1ed)][_0x5d5042(0x1fe)]('blink'),setTimeout(()=>{const _0x21d094=_0x5d5042;_0x1d53d8['classList'][_0x21d094(0x18b)](_0x21d094(0x1db));},0x960);});}function stopColorBlink(){const _0x7462d4=_0x1765,_0x573143=document[_0x7462d4(0x224)](_0x7462d4(0x1ae)),_0x53e1d1=document[_0x7462d4(0x1fb)](_0x7462d4(0x1ab));_0x573143&&(_0x573143[_0x7462d4(0x1ed)][_0x7462d4(0x18b)](_0x7462d4(0x1db)),_0x573143[_0x7462d4(0x20c)][_0x7462d4(0x223)]=''),_0x53e1d1[_0x7462d4(0x202)](_0x3dcfbe=>{const _0x2c20a5=_0x7462d4;_0x3dcfbe[_0x2c20a5(0x1ed)]['remove'](_0x2c20a5(0x1db)),_0x3dcfbe[_0x2c20a5(0x20c)][_0x2c20a5(0x223)]='';});}let pendingDeleteKey=null,pendingDeleteQty=null;function _0x16ea(){const _0x158c0b=['102~118','push','saddleBtn','log','已配置\x20','</span>-','\x20×\x20<span\x20class=\x22highlight-number\x22>','search','#f97316','tag','blink','1509272EbACPO','535BfFTOW','tagName','Standard','</span>','110073dxNvUH','div','appendChild','mode','trace','mouseup','crossBtn','#d43030','toFixed','selectedColor','</span>)\x0a\x20\x20\x20\x20',';\x20font-weight:600;\x27>','classList','150~165','lengthVal','removeItem','table','diaVal','cross','w_clip','超出支持数量','pointerEvents','limitVal','</span>-Ø<span\x20style=\x27color:','reduce','<span\x20style=\x27color:','querySelectorAll','history','交叉缝','add','请先设置支持数量','</span>-\x0a\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-number\x22>','setItem','forEach','.card:nth-of-type(2)\x20.switch\x20button',';\x22>','modeVal','prototype','includes','toString','touchmove','stitchType','getAttribute','style','sort','clearConfirmPanel','85~102','toggle','target','colorSelectTitle','Yellow','console','</span>-Ø<span\x20class=\x22highlight-number\x22>','pending','used','data-color','焦糖色','.capsule-stepper\x20button','min','笔夹宽≤9\x20且\x20凸出≤7','</span>-\x0a\x20\x20\x20\x20\x20\x20<span\x20class=\x22color-name-in-history\x22\x20style=\x22color:\x20','writeText','button','已删除','笔夹宽>9\x20或\x20凸出>7','Wide','animation','getElementById','apply','deleteConfirmPanel','className','Slim','<span\x20style=\x27color:#ffb347;\x20font-weight:600;\x27>?</span>-','offsetWidth','warn','addEventListener','confirmText','\x20×\x20<span\x20style=\x27color:','</span>)','qtyStepper','confirmHint','ontouchstart','qty','{}.constructor(\x22return\x20this\x22)(\x20)','Caramel','请选择笔夹类型','qtyPlusBtn','请选择交叉缝或马鞍缝','__proto__','118~135','已复制','#4a4a4a','#ffb347','<span\x20style=\x22color:\x20','</span>\x0a\x20\x20\x20\x20\x20\x20(L<span\x20class=\x22highlight-number\x22>','preview','charCodeAt','parse','365071KEITUJ','none','item-code',';\x20font-weight:600;\x27>—</span>-','bind','info','Ø\x20—','直径（mm）','limit','offsetHeight','max','auto','remove','6530056tFkbSs','genBtn','\x20(L','.card:nth-of-type(2)\x20.capsule-stepper\x20button','请先设置数量并选择笔夹类型','mouseenter','请先设置数量','getItem','psfs_v50_color','(((.+)+)+)+$','仅当配额完全使用时才可复制全部','error','Nero','clipless','flex','saddle','Micro','135~150','item','click','clipboard','#ffffff','clipped','display','opacity','innerText','values','BUTTON','qtyMinusBtn','exception',';\x20font-weight:\x20600;\x22>','.color-chip','无笔夹\x20(mm)','\x20个笔套','colorLabel','createElement','—\x20×\x20<span\x20style=\x27color:','maxTouchPoints','confirmPanel','stopPropagation','innerHTML','mouseleave','\x0a\x20\x20\x20\x20\x20\x20','338352IsAgBr','return\x20(function()\x20','code','tag\x20mode-hint','qty-btn-disabled','配额已满，如需调整请先删除或增加数量','1146070oWifUh','onclick','22206ngdxAS','已清空','historyOrder','dia','timestamp','splice','马鞍缝','now','active','constructor','#c68a4e','disabled','color','\x20(L<span\x20style=\x27color:','indexOf','length','#f5d742','value'];_0x16ea=function(){return _0x158c0b;};return _0x16ea();}const COLOR_LIST=[_0x5731b2(0x235),_0x5731b2(0x213),_0x5731b2(0x198),'Red'],COLOR_TEXT_MAP={'Caramel':_0x5731b2(0x1c9),'Yellow':_0x5731b2(0x1cf),'Nero':_0x5731b2(0x23c),'Red':_0x5731b2(0x1e8)},COLOR_DISPLAY_MAP={'Caramel':_0x5731b2(0x219),'Yellow':'黄色','Nero':'乌木黑','Red':'红色'};let selectedColor=null,state={'limit':0x0,'used':0x0,'qty':0x0,'mode':null,'length':0x55,'dia':0x7,'history':{},'historyOrder':[]};const L=document[_0x5731b2(0x224)]('L'),D=document[_0x5731b2(0x224)]('D'),c1=document[_0x5731b2(0x224)]('c1'),c2=document[_0x5731b2(0x224)]('c2'),c3=document[_0x5731b2(0x224)]('c3'),genBtn=document[_0x5731b2(0x224)](_0x5731b2(0x18d)),copyBtn=document['getElementById']('copyBtn'),dcSpan=document[_0x5731b2(0x224)]('Dc'),colorSelectTitleSpan=document[_0x5731b2(0x224)](_0x5731b2(0x212)),qtyPlusBtn=document[_0x5731b2(0x224)](_0x5731b2(0x237)),qtyMinusBtn=document[_0x5731b2(0x224)](_0x5731b2(0x1a8)),previewDiv=document[_0x5731b2(0x224)](_0x5731b2(0x240)),qtyStepper=document[_0x5731b2(0x224)](_0x5731b2(0x230));function getModeDisplayName(_0x5d5731){const _0x3de3fb={'clipped':'S','clipless':'N','w_clip':'W'};return _0x5d5731?_0x3de3fb[_0x5d5731]||_0x5d5731:'—';}function triggerCapsuleBlink(){const _0x4c1134=_0x5731b2;if(!qtyStepper)return;qtyStepper[_0x4c1134(0x1ed)][_0x4c1134(0x18b)](_0x4c1134(0x1db)),void qtyStepper[_0x4c1134(0x22a)],requestAnimationFrame(()=>{const _0x8e0ab2=_0x4c1134;qtyStepper['classList'][_0x8e0ab2(0x1fe)](_0x8e0ab2(0x1db));}),setTimeout(()=>{const _0x438ae7=_0x4c1134;if(qtyStepper)qtyStepper['classList'][_0x438ae7(0x18b)](_0x438ae7(0x1db));},0x9c4);}function stopCapsuleBlink(){const _0x397edb=_0x5731b2;if(qtyStepper)qtyStepper['classList']['remove'](_0x397edb(0x1db));}function resetAllHoverStates(){nClipHoverActive&&updateDcForNClipHover(![]),sClipHoverActive&&updateDcForSClipHover(![]),wClipHoverActive&&updateDcForWClipHover(![]);}let sClipHoverActive=![],savedDcText='',savedDcClass='';function updateDcForSClipHover(_0x20bcc0){const _0x4e4745=_0x5731b2;_0x20bcc0?(savedDcText=dcSpan[_0x4e4745(0x1a5)],savedDcClass=dcSpan[_0x4e4745(0x227)],dcSpan[_0x4e4745(0x1a5)]=_0x4e4745(0x21c),dcSpan[_0x4e4745(0x227)]=_0x4e4745(0x1ba),sClipHoverActive=!![]):(sClipHoverActive=![],render());}let wClipHoverActive=![],savedDcTextW='',savedDcClassW='';function updateDcForWClipHover(_0x30be0e){const _0x229c9c=_0x5731b2;_0x30be0e?(savedDcTextW=dcSpan[_0x229c9c(0x1a5)],savedDcClassW=dcSpan['className'],dcSpan['innerText']=_0x229c9c(0x221),dcSpan[_0x229c9c(0x227)]=_0x229c9c(0x1ba),wClipHoverActive=!![]):(wClipHoverActive=![],render());}let nClipHoverActive=![],savedDcTextN='',savedDcClassN='';function updateDcForNClipHover(_0x968de8){const _0x4642eb=_0x5731b2;_0x968de8?(savedDcTextN=dcSpan[_0x4642eb(0x1a5)],savedDcClassN=dcSpan[_0x4642eb(0x227)],dcSpan['innerText']=_0x4642eb(0x1ac),dcSpan[_0x4642eb(0x227)]=_0x4642eb(0x1ba),nClipHoverActive=!![]):(nClipHoverActive=![],render());}c2[_0x5731b2(0x22c)](_0x5731b2(0x191),function(){!this['disabled']&&(wClipHoverActive&&updateDcForWClipHover(![]),nClipHoverActive&&updateDcForNClipHover(![]),updateDcForSClipHover(!![]));}),c2[_0x5731b2(0x22c)](_0x5731b2(0x1b5),function(){updateDcForSClipHover(![]);}),c3['addEventListener']('mouseenter',function(){const _0x357c7e=_0x5731b2;!this[_0x357c7e(0x1ca)]&&(sClipHoverActive&&updateDcForSClipHover(![]),nClipHoverActive&&updateDcForNClipHover(![]),updateDcForWClipHover(!![]));}),c3['addEventListener']('mouseleave',function(){updateDcForWClipHover(![]);}),c1[_0x5731b2(0x22c)](_0x5731b2(0x191),function(){const _0x30f9aa=_0x5731b2;!this[_0x30f9aa(0x1ca)]&&(sClipHoverActive&&updateDcForSClipHover(![]),wClipHoverActive&&updateDcForWClipHover(![]),updateDcForNClipHover(!![]));}),c1[_0x5731b2(0x22c)]('mouseleave',function(){updateDcForNClipHover(![]);});function updateTitleColor(){const _0x120cca=_0x5731b2;if(!colorSelectTitleSpan)return;selectedColor&&COLOR_TEXT_MAP[selectedColor]?colorSelectTitleSpan[_0x120cca(0x20c)]['color']=COLOR_TEXT_MAP[selectedColor]:colorSelectTitleSpan[_0x120cca(0x20c)]['color']=_0x120cca(0x1a1);}function stopBlinking(){const _0x479cd9=_0x5731b2;if(copyBtn)copyBtn[_0x479cd9(0x1ed)][_0x479cd9(0x18b)](_0x479cd9(0x1db));if(c1)c1['classList'][_0x479cd9(0x18b)](_0x479cd9(0x1db));if(c2)c2['classList'][_0x479cd9(0x18b)](_0x479cd9(0x1db));if(c3)c3[_0x479cd9(0x1ed)][_0x479cd9(0x18b)]('blink');stopCapsuleBlink();const _0x4fa329=document[_0x479cd9(0x224)](_0x479cd9(0x231));if(_0x4fa329)_0x4fa329[_0x479cd9(0x1ed)][_0x479cd9(0x18b)](_0x479cd9(0x1db));}function triggerBlink(_0x57a4d7){const _0x257965=_0x5731b2;if(!_0x57a4d7)return;_0x57a4d7[_0x257965(0x1ed)]['remove'](_0x257965(0x1db)),void _0x57a4d7[_0x257965(0x22a)],requestAnimationFrame(()=>{const _0xb3adf5=_0x257965;_0x57a4d7[_0xb3adf5(0x1ed)][_0xb3adf5(0x1fe)](_0xb3adf5(0x1db));}),setTimeout(()=>{const _0x35c2e2=_0x257965;if(_0x57a4d7)_0x57a4d7[_0x35c2e2(0x1ed)][_0x35c2e2(0x18b)]('blink');},0x9c4);}function initColorSelector(){const _0x28f1c6=_0x5731b2,_0x290b5f=document[_0x28f1c6(0x1fb)](_0x28f1c6(0x1ab));_0x290b5f[_0x28f1c6(0x202)](_0x174d4d=>{_0x174d4d['addEventListener']('click',_0x6daa60=>{const _0x586caf=_0x1765;_0x6daa60['stopPropagation']();const _0x32a2aa=state[_0x586caf(0x24b)]>=0x1,_0x2fe099=state['mode']!==null;if(!_0x32a2aa||!_0x2fe099){toast(_0x586caf(0x190));return;}const _0x51214f=_0x174d4d[_0x586caf(0x20b)]('data-color');_0x51214f&&COLOR_LIST[_0x586caf(0x207)](_0x51214f)&&(selectedColor=_0x51214f,updateColorActiveUI(),updateTitleColor(),renderPreviewText(),render(),save(),stopColorBlink());});});}function updateColorActiveUI(){const _0x1ae180=_0x5731b2,_0x5ddfd8=document[_0x1ae180(0x1fb)](_0x1ae180(0x1ab));_0x5ddfd8[_0x1ae180(0x202)](_0xb9eb30=>{const _0x334c86=_0x1ae180,_0x2d5a21=_0xb9eb30[_0x334c86(0x20b)](_0x334c86(0x218));selectedColor&&_0x2d5a21===selectedColor?_0xb9eb30[_0x334c86(0x1ed)][_0x334c86(0x1fe)](_0x334c86(0x1c7)):_0xb9eb30[_0x334c86(0x1ed)][_0x334c86(0x18b)](_0x334c86(0x1c7));});}function renderPreviewText(){const _0x2c2612=_0x5731b2;if(!previewDiv)return;const _0x41cabb=state['mode']!==null,_0x29a11f=getModeDisplayName(state[_0x2c2612(0x1e4)]),_0x1dc79e=stitchType?stitchType===_0x2c2612(0x1f3)?_0x2c2612(0x1fd):_0x2c2612(0x1c5):'—',_0x2c9d79=_0x2c2612(0x1d9);let _0x4fe526='?';if(state[_0x2c2612(0x1e4)])_0x4fe526=toolCode();else _0x4fe526='—';if(_0x41cabb&&selectedColor){const _0xa0f08=COLOR_DISPLAY_MAP[selectedColor]||selectedColor,_0x30a412=COLOR_TEXT_MAP[selectedColor]||_0x2c2612(0x23d),_0x5c3fc4=_0x2c2612(0x23e)+_0x30a412+_0x2c2612(0x1aa)+_0xa0f08+_0x2c2612(0x1e0),_0x14dffd=_0x4fe526+_0x2c2612(0x22e)+_0x2c9d79+_0x2c2612(0x1ec)+state[_0x2c2612(0x233)]+_0x2c2612(0x1e0)+_0x2c2612(0x1cc)+_0x2c9d79+';\x20font-weight:600;\x27>'+clean(state[_0x2c2612(0x1ce)])+_0x2c2612(0x1f8)+_0x2c9d79+_0x2c2612(0x1ec)+clean(state['dia'])+_0x2c2612(0x1d6)+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x29a11f+_0x2c2612(0x1d6)+_0x5c3fc4+'-'+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x1dc79e+_0x2c2612(0x22f);previewDiv['innerHTML']=_0x14dffd;}else{if(_0x41cabb&&!selectedColor){const _0x4fb1cb=_0x4fe526+_0x2c2612(0x22e)+_0x2c9d79+_0x2c2612(0x1ec)+state[_0x2c2612(0x233)]+'</span>'+_0x2c2612(0x1cc)+_0x2c9d79+_0x2c2612(0x1ec)+clean(state[_0x2c2612(0x1ce)])+_0x2c2612(0x1f8)+_0x2c9d79+_0x2c2612(0x1ec)+clean(state[_0x2c2612(0x1c2)])+_0x2c2612(0x1d6)+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x29a11f+_0x2c2612(0x1d6)+'<span\x20style=\x27color:#ffb347;\x20font-weight:600;\x27>?</span>-'+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x1dc79e+'</span>)';previewDiv[_0x2c2612(0x1b4)]=_0x4fb1cb;}else{if(!_0x41cabb&&stitchType!==null){const _0xad4afe=_0x2c2612(0x1b0)+_0x2c9d79+_0x2c2612(0x1ec)+state['qty']+_0x2c2612(0x1e0)+_0x2c2612(0x1cc)+_0x2c9d79+';\x20font-weight:600;\x27>'+clean(state[_0x2c2612(0x1ce)])+'</span>-Ø<span\x20style=\x27color:'+_0x2c9d79+_0x2c2612(0x1ec)+clean(state['dia'])+_0x2c2612(0x1d6)+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x246)+_0x2c2612(0x229)+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x1dc79e+'</span>)';previewDiv[_0x2c2612(0x1b4)]=_0xad4afe;}else{const _0x458918=_0x4fe526+_0x2c2612(0x22e)+_0x2c9d79+_0x2c2612(0x1ec)+state[_0x2c2612(0x233)]+'</span>'+_0x2c2612(0x1cc)+_0x2c9d79+_0x2c2612(0x1ec)+clean(state['length'])+_0x2c2612(0x1f8)+_0x2c9d79+_0x2c2612(0x1ec)+clean(state[_0x2c2612(0x1c2)])+'</span>-'+_0x2c2612(0x1fa)+_0x2c9d79+_0x2c2612(0x1ec)+_0x29a11f+_0x2c2612(0x22f);previewDiv[_0x2c2612(0x1b4)]=_0x458918;}}}}function applyModeConstraints(){const _0x3a64ca=_0x5731b2;let _0x5d3e8f,_0x1efaf8;if(state[_0x3a64ca(0x1e4)]===_0x3a64ca(0x1a2))stitchType===_0x3a64ca(0x19b)?(_0x5d3e8f=0x6,_0x1efaf8=0x13):(_0x5d3e8f=0x7,_0x1efaf8=20.5);else{if(state['mode']===_0x3a64ca(0x199))stitchType===_0x3a64ca(0x19b)?(_0x5d3e8f=0x7,_0x1efaf8=0x15):(_0x5d3e8f=8.5,_0x1efaf8=22.5);else state['mode']===_0x3a64ca(0x1f4)?stitchType===_0x3a64ca(0x19b)?(_0x5d3e8f=0x6,_0x1efaf8=0x11):(_0x5d3e8f=0x6,_0x1efaf8=18.5):(_0x5d3e8f=0x7,_0x1efaf8=18.5);}D[_0x3a64ca(0x21b)]=_0x5d3e8f,D[_0x3a64ca(0x189)]=_0x1efaf8;if(state[_0x3a64ca(0x1c2)]<_0x5d3e8f)state[_0x3a64ca(0x1c2)]=_0x5d3e8f;if(state[_0x3a64ca(0x1c2)]>_0x1efaf8)state[_0x3a64ca(0x1c2)]=_0x1efaf8;if(D)D[_0x3a64ca(0x1d0)]=state[_0x3a64ca(0x1c2)];}function save(){const _0x367d18=_0x5731b2,_0x41f205={...state,'selectedColor':selectedColor,'historyOrder':state['historyOrder'],'stitchType':stitchType};localStorage[_0x367d18(0x201)]('psfs_v50_color',JSON['stringify'](_0x41f205));}function load(){const _0x5919cc=_0x5731b2;try{const _0x7116c=JSON[_0x5919cc(0x242)](localStorage[_0x5919cc(0x193)]('psfs_v50_color'));_0x7116c?(state[_0x5919cc(0x24b)]=_0x7116c['limit']||0x0,state[_0x5919cc(0x217)]=_0x7116c[_0x5919cc(0x217)]||0x0,state[_0x5919cc(0x233)]=_0x7116c[_0x5919cc(0x233)]||0x0,state[_0x5919cc(0x1e4)]=_0x7116c['mode']||null,state[_0x5919cc(0x1ce)]=_0x7116c[_0x5919cc(0x1ce)]||0x55,state['dia']=_0x7116c[_0x5919cc(0x1c2)]||0x7,state['history']=_0x7116c[_0x5919cc(0x1fc)]||{},state[_0x5919cc(0x1c1)]=_0x7116c['historyOrder']||[],selectedColor=_0x7116c[_0x5919cc(0x1ea)]!==undefined?_0x7116c['selectedColor']:null,stitchType=_0x7116c[_0x5919cc(0x20a)]!==undefined?_0x7116c['stitchType']:null):(selectedColor=null,state['historyOrder']=[],stitchType=null);if(selectedColor&&!COLOR_LIST[_0x5919cc(0x207)](selectedColor))selectedColor=null;state[_0x5919cc(0x1c1)]?state[_0x5919cc(0x1c1)]=state[_0x5919cc(0x1c1)]['filter'](_0x5b2f51=>state[_0x5919cc(0x1fc)][_0x5b2f51]):state['historyOrder']=[];}catch(_0x2f2b05){selectedColor=null,state[_0x5919cc(0x1c1)]=[],stitchType=null;}updateTitleColor(),updateStitchButtons();}load(),applyModeConstraints(),updateColorActiveUI(),updateStitchButtons();let renderPending=![];function scheduleRender(){if(renderPending)return;renderPending=!![],requestAnimationFrame(()=>{renderPending=![],render();});}function handleLengthChange(_0x21e812){const _0x21defa=_0x5731b2;resetAllHoverStates(),state[_0x21defa(0x1ce)]=+_0x21e812,document['getElementById']('Lv')[_0x21defa(0x1a5)]=state[_0x21defa(0x1ce)]['toFixed'](0x1),scheduleRender(),save();}L[_0x5731b2(0x22c)]('input',function(_0xd42252){const _0x13f470=_0x5731b2;handleLengthChange(_0xd42252[_0x13f470(0x211)][_0x13f470(0x1d0)]);}),L[_0x5731b2(0x22c)](_0x5731b2(0x209),function(_0x3f0b8b){const _0x17a9e2=_0x5731b2;handleLengthChange(_0x3f0b8b[_0x17a9e2(0x211)][_0x17a9e2(0x1d0)]);});function handleDiameterChange(_0x410d0c){const _0x1feb79=_0x5731b2;resetAllHoverStates(),state[_0x1feb79(0x1c2)]=+_0x410d0c,document['getElementById']('Dv')['innerText']=state[_0x1feb79(0x1c2)][_0x1feb79(0x1e9)](0x1),scheduleRender(),save();}D['addEventListener']('input',function(_0x469483){const _0x146f20=_0x5731b2;handleDiameterChange(_0x469483[_0x146f20(0x211)][_0x146f20(0x1d0)]);}),D[_0x5731b2(0x22c)](_0x5731b2(0x209),function(_0x3fb789){const _0x590ea1=_0x5731b2;handleDiameterChange(_0x3fb789[_0x590ea1(0x211)][_0x590ea1(0x1d0)]);});function setLimit(_0x228897){const _0x306c03=_0x5731b2,_0x100388=Math[_0x306c03(0x189)](0x0,state[_0x306c03(0x24b)]+_0x228897);state[_0x306c03(0x24b)]=_0x100388,state[_0x306c03(0x217)]===state['limit']&&state[_0x306c03(0x24b)]>0x0&&(state[_0x306c03(0x1e4)]=null,stitchType=null,selectedColor=null,c1[_0x306c03(0x1ed)]['remove'](_0x306c03(0x1c7)),c2[_0x306c03(0x1ed)]['remove'](_0x306c03(0x1c7)),c3['classList'][_0x306c03(0x18b)](_0x306c03(0x1c7)),updateColorActiveUI(),updateTitleColor()),state['limit']===0x0?(state[_0x306c03(0x1e4)]=null,selectedColor=null,stitchType=null,c1[_0x306c03(0x1ed)]['remove'](_0x306c03(0x1c7)),c2[_0x306c03(0x1ed)][_0x306c03(0x18b)]('active'),c3[_0x306c03(0x1ed)][_0x306c03(0x18b)]('active'),updateColorActiveUI(),updateTitleColor()):stitchType===null&&setTimeout(flashStitchButtons,0x64),updateStitchButtons(),applyModeConstraints(),render(),save();}function mode(_0x2b2e53){const _0x1955cd=_0x5731b2;if(state[_0x1955cd(0x24b)]===0x0){toast(_0x1955cd(0x1ff));return;}if(stitchType===null){toast(_0x1955cd(0x238));return;}state['mode']=_0x2b2e53,selectedColor=null,updateTitleColor(),applyModeConstraints(),c1['classList'][_0x1955cd(0x210)](_0x1955cd(0x1c7),_0x2b2e53===_0x1955cd(0x199)),c2['classList'][_0x1955cd(0x210)]('active',_0x2b2e53==='clipped'),c3[_0x1955cd(0x1ed)][_0x1955cd(0x210)](_0x1955cd(0x1c7),_0x2b2e53===_0x1955cd(0x1f4)),updateColorActiveUI(),render(),save();}function lenStep(_0x437904){const _0x510c63=_0x5731b2;state[_0x510c63(0x1ce)]=Math[_0x510c63(0x189)](0x55,Math[_0x510c63(0x21b)](0xa5,+(state['length']+_0x437904)[_0x510c63(0x1e9)](0x1))),L[_0x510c63(0x1d0)]=state[_0x510c63(0x1ce)],render(),save();}function diaStep(_0x4107f5){const _0x22fcbb=_0x5731b2;state[_0x22fcbb(0x1c2)]=Math[_0x22fcbb(0x189)](+D['min'],Math['min'](+D[_0x22fcbb(0x189)],+(state[_0x22fcbb(0x1c2)]+_0x4107f5)['toFixed'](0x1))),D[_0x22fcbb(0x1d0)]=state['dia'],render(),save();}function toolCode(){const _0x41bf6b=_0x5731b2;if(!state[_0x41bf6b(0x1e4)])return'?';return lenCode(state['length'])+diaCode(state[_0x41bf6b(0x1c2)]);}function lenCode(_0xd7dc49){const _0x57664f=_0x5731b2,_0x1bd175=[{'max':0x66},{'max':0x76},{'max':0x87},{'max':0x96},{'max':0xa5}];for(let _0x1093d0=0x0;_0x1093d0<_0x1bd175['length'];_0x1093d0++){if(_0xd7dc49<=_0x1bd175[_0x1093d0][_0x57664f(0x189)])return _0x1093d0+0x1;}return 0x5;}function diaCode(_0x1af7b3){const _0x503be8=_0x5731b2;if(!state[_0x503be8(0x1e4)])return'A';let _0x9443bc;if(stitchType===_0x503be8(0x19b)){if(state['mode']===_0x503be8(0x1a2))_0x9443bc=[{'max':0x6,'code':'A'},{'max':0x7,'code':'B'},{'max':0x9,'code':'C'},{'max':0xb,'code':'D'},{'max':0xd,'code':'E'},{'max':0xf,'code':'F'},{'max':0x11,'code':'G'},{'max':0x13,'code':'G'}];else{if(state[_0x503be8(0x1e4)]===_0x503be8(0x199))_0x9443bc=[{'max':0x7,'code':'A'},{'max':0x9,'code':'B'},{'max':0xb,'code':'C'},{'max':0xd,'code':'D'},{'max':0xf,'code':'E'},{'max':0x11,'code':'F'},{'max':0x13,'code':'G'},{'max':0x15,'code':'G'}];else state[_0x503be8(0x1e4)]==='w_clip'?_0x9443bc=[{'max':0x6,'code':'B'},{'max':0x7,'code':'C'},{'max':0x9,'code':'D'},{'max':0xb,'code':'E'},{'max':0xd,'code':'F'},{'max':0xf,'code':'G'},{'max':0x11,'code':'G'}]:_0x9443bc=[{'max':0x6,'code':'A'},{'max':0x7,'code':'B'},{'max':0x9,'code':'C'},{'max':0xb,'code':'D'},{'max':0xd,'code':'E'},{'max':0xf,'code':'F'},{'max':0x11,'code':'G'},{'max':0x13,'code':'G'}];}}else{if(state[_0x503be8(0x1e4)]==='clipped')_0x9443bc=[{'max':0x7,'code':'A'},{'max':8.5,'code':'B'},{'max':10.5,'code':'C'},{'max':12.5,'code':'D'},{'max':14.5,'code':'E'},{'max':16.5,'code':'F'},{'max':18.5,'code':'G'},{'max':20.5,'code':'G'}];else{if(state[_0x503be8(0x1e4)]===_0x503be8(0x199))_0x9443bc=[{'max':8.5,'code':'A'},{'max':10.5,'code':'B'},{'max':12.5,'code':'C'},{'max':14.5,'code':'D'},{'max':16.5,'code':'E'},{'max':18.5,'code':'F'},{'max':20.5,'code':'G'},{'max':22.5,'code':'G'}];else state[_0x503be8(0x1e4)]===_0x503be8(0x1f4)?_0x9443bc=[{'max':0x6,'code':'B'},{'max':8.5,'code':'C'},{'max':10.5,'code':'D'},{'max':12.5,'code':'E'},{'max':14.5,'code':'F'},{'max':16.5,'code':'G'},{'max':18.5,'code':'G'}]:_0x9443bc=[{'max':0x7,'code':'A'},{'max':8.5,'code':'B'},{'max':10.5,'code':'C'},{'max':12.5,'code':'D'},{'max':14.5,'code':'E'},{'max':16.5,'code':'F'},{'max':18.5,'code':'G'},{'max':20.5,'code':'G'}];}}for(const _0x147010 of _0x9443bc){if(_0x1af7b3<=_0x147010[_0x503be8(0x189)])return _0x147010[_0x503be8(0x1b9)];}return'A';}function getDiameterText(){const _0xb74e6=_0x5731b2;if(!state[_0xb74e6(0x1e4)])return _0xb74e6(0x249);const _0x579dea=diaCode(state[_0xb74e6(0x1c2)]),_0x2aa65b=[_0xb74e6(0x19c),'Ultra\x20Slim',_0xb74e6(0x228),_0xb74e6(0x1df),_0xb74e6(0x222),'Extra\x20Wide','Ultra\x20Wide'],_0x579931=_0x579dea[_0xb74e6(0x241)](0x0)-0x41;return'Ø\x20'+(_0x2aa65b[_0x579931]||'—');}function getDiameterClass(){const _0x12a004=_0x5731b2;if(!state[_0x12a004(0x1e4)])return _0x12a004(0x1da);const _0x2a0530=diaCode(state[_0x12a004(0x1c2)]),_0x31e7d3=_0x2a0530[_0x12a004(0x241)](0x0)-0x41;return'tag\x20'+(['d1','d2','d3','d4','d5','d6','d7'][_0x31e7d3]||_0x12a004(0x1da));}function handleQtyChange(_0x2b524e){const _0x3d99a3=_0x5731b2;if(state[_0x3d99a3(0x24b)]===0x0){toast(_0x3d99a3(0x192));return;}if(state[_0x3d99a3(0x1e4)]===null){toast('请选择笔夹类型');return;}if(!selectedColor){showColorPickHint();return;}const _0x7a5e38=Math[_0x3d99a3(0x189)](0x0,state[_0x3d99a3(0x233)]+_0x2b524e);if(state[_0x3d99a3(0x217)]+_0x7a5e38>state['limit']){toast('超出支持数量');return;}state['qty']=_0x7a5e38,render(),save();}function qty(_0x3aedf1){handleQtyChange(_0x3aedf1);}function showConfirm(){const _0x4d3d45=_0x5731b2;if(state[_0x4d3d45(0x24b)]===0x0||state['mode']===null){toast(_0x4d3d45(0x236));return;}if(!selectedColor){showColorPickHint();return;}if(state[_0x4d3d45(0x233)]<=0x0)return toast('数量为\x200');if(state[_0x4d3d45(0x217)]+state['qty']>state['limit'])return toast(_0x4d3d45(0x1f5));const _0x2e1b2c=getModeDisplayName(state['mode']),_0x2c1e1b=stitchType?stitchType===_0x4d3d45(0x1f3)?'交叉缝':_0x4d3d45(0x1c5):'—',_0x57a543=_0x4d3d45(0x1d9),_0x3aa6b7=toolCode(),_0x232ae0=COLOR_DISPLAY_MAP[selectedColor]||selectedColor,_0x197a39=COLOR_TEXT_MAP[selectedColor]||'#ffb347';document[_0x4d3d45(0x224)](_0x4d3d45(0x22d))[_0x4d3d45(0x1b4)]=_0x3aa6b7+_0x4d3d45(0x22e)+_0x57a543+_0x4d3d45(0x1ec)+state[_0x4d3d45(0x233)]+_0x4d3d45(0x1e0)+_0x4d3d45(0x1cc)+_0x57a543+';\x20font-weight:600;\x27>'+clean(state['length'])+'</span>-Ø<span\x20style=\x27color:'+_0x57a543+';\x20font-weight:600;\x27>'+clean(state[_0x4d3d45(0x1c2)])+_0x4d3d45(0x1d6)+_0x4d3d45(0x1fa)+_0x57a543+_0x4d3d45(0x1ec)+_0x2e1b2c+'</span>-'+_0x4d3d45(0x1fa)+_0x197a39+';\x20font-weight:600;\x27>'+_0x232ae0+_0x4d3d45(0x1d6)+_0x4d3d45(0x1fa)+_0x57a543+_0x4d3d45(0x1ec)+_0x2c1e1b+_0x4d3d45(0x22f);const _0x2ede66=document[_0x4d3d45(0x224)]('confirmHint');_0x2ede66&&(_0x2ede66[_0x4d3d45(0x1ed)][_0x4d3d45(0x18b)]('blink'),void _0x2ede66[_0x4d3d45(0x22a)],requestAnimationFrame(()=>{const _0x4d8166=_0x4d3d45;_0x2ede66[_0x4d8166(0x1ed)][_0x4d8166(0x1fe)](_0x4d8166(0x1db));})),document[_0x4d3d45(0x224)](_0x4d3d45(0x1b2))['style'][_0x4d3d45(0x1a3)]=_0x4d3d45(0x19a);}function hideConfirm(){const _0x304846=_0x5731b2;document['getElementById']('confirmPanel')['style'][_0x304846(0x1a3)]=_0x304846(0x244);}function doSave(){const _0x385075=_0x5731b2;if(!selectedColor){showColorPickHint();return;}const _0x4bb1db=toolCode(),_0x487b4c=selectedColor,_0x4b4842=_0x4bb1db+_0x487b4c;if(!state[_0x385075(0x1fc)][_0x4b4842])state[_0x385075(0x1fc)][_0x4b4842]={'qty':0x0,'code':_0x4bb1db,'color':_0x487b4c,'lengthVal':state[_0x385075(0x1ce)],'diaVal':state['dia'],'modeVal':state[_0x385075(0x1e4)],'stitchType':stitchType,'timestamp':Date[_0x385075(0x1c6)]()},state[_0x385075(0x1c1)]['push'](_0x4b4842);else{state[_0x385075(0x1fc)][_0x4b4842][_0x385075(0x1c3)]=Date[_0x385075(0x1c6)]();const _0x39dc6e=state['historyOrder']['indexOf'](_0x4b4842);if(_0x39dc6e!==-0x1)state[_0x385075(0x1c1)][_0x385075(0x1c4)](_0x39dc6e,0x1);state[_0x385075(0x1c1)][_0x385075(0x1d2)](_0x4b4842);}state['history'][_0x4b4842][_0x385075(0x233)]+=state['qty'],state['used']+=state[_0x385075(0x233)],c1['classList'][_0x385075(0x18b)](_0x385075(0x1c7)),c2[_0x385075(0x1ed)]['remove'](_0x385075(0x1c7)),c3[_0x385075(0x1ed)][_0x385075(0x18b)](_0x385075(0x1c7)),state[_0x385075(0x1e4)]=null,stitchType=null,selectedColor=null,state['qty']=0x0,updateColorActiveUI(),updateTitleColor(),updateStitchButtons(),hideConfirm(),render(),save(),toast(_0x385075(0x1d5)+state['used']+_0x385075(0x1ad));}function showClearConfirm(){const _0x5ab333=_0x5731b2;document[_0x5ab333(0x224)](_0x5ab333(0x20e))[_0x5ab333(0x20c)][_0x5ab333(0x1a3)]=_0x5ab333(0x19a);}function hideClearConfirm(){const _0x2302da=_0x5731b2;document[_0x2302da(0x224)](_0x2302da(0x20e))[_0x2302da(0x20c)][_0x2302da(0x1a3)]='none';}function doClear(){const _0x2dbdbe=_0x5731b2;state={'limit':0x0,'used':0x0,'qty':0x0,'mode':null,'length':0x55,'dia':0x7,'history':{},'historyOrder':[]},selectedColor=null,stitchType=null,localStorage[_0x2dbdbe(0x1f0)](_0x2dbdbe(0x194));if(L)L['value']=0x55;if(D)D[_0x2dbdbe(0x1d0)]=0x7;c1[_0x2dbdbe(0x1ed)]['remove'](_0x2dbdbe(0x1c7)),c2[_0x2dbdbe(0x1ed)]['remove'](_0x2dbdbe(0x1c7)),c3[_0x2dbdbe(0x1ed)][_0x2dbdbe(0x18b)](_0x2dbdbe(0x1c7)),updateColorActiveUI(),updateTitleColor(),updateStitchButtons(),render(),toast(_0x2dbdbe(0x1c0)),hideClearConfirm();}function showDeleteConfirm(_0x502c74,_0x268648){const _0x3d69ab=_0x5731b2;pendingDeleteKey=_0x502c74,pendingDeleteQty=_0x268648,document['getElementById'](_0x3d69ab(0x226))[_0x3d69ab(0x20c)][_0x3d69ab(0x1a3)]=_0x3d69ab(0x19a);}function hideDeleteConfirm(){const _0x1a2b1e=_0x5731b2;document['getElementById'](_0x1a2b1e(0x226))[_0x1a2b1e(0x20c)]['display']=_0x1a2b1e(0x244),pendingDeleteKey=null,pendingDeleteQty=null;}function doDelete(){const _0x4110bc=_0x5731b2;if(pendingDeleteKey){state['used']-=pendingDeleteQty,delete state['history'][pendingDeleteKey];const _0x7b7025=state['historyOrder'][_0x4110bc(0x1cd)](pendingDeleteKey);if(_0x7b7025!==-0x1)state[_0x4110bc(0x1c1)][_0x4110bc(0x1c4)](_0x7b7025,0x1);render(),save(),toast(_0x4110bc(0x220));}hideDeleteConfirm();}function applyBlinking(){const _0xe50069=_0x5731b2;state[_0xe50069(0x24b)]===0x0?triggerCapsuleBlink():stopCapsuleBlink();if(state[_0xe50069(0x24b)]>=0x1&&stitchType!==null&&state[_0xe50069(0x1e4)]===null){if(c1)triggerBlink(c1);if(c2)triggerBlink(c2);if(c3)triggerBlink(c3);}else{if(c1)c1[_0xe50069(0x1ed)]['remove'](_0xe50069(0x1db));if(c2)c2[_0xe50069(0x1ed)]['remove'](_0xe50069(0x1db));if(c3)c3[_0xe50069(0x1ed)][_0xe50069(0x18b)](_0xe50069(0x1db));}const _0x114eb1=Object[_0xe50069(0x1a6)](state[_0xe50069(0x1fc)])[_0xe50069(0x1f9)]((_0x215811,_0x12899a)=>_0x215811+_0x12899a[_0xe50069(0x233)],0x0);state['limit']>0x0&&_0x114eb1===state['limit']?copyBtn&&!copyBtn[_0xe50069(0x1ca)]&&triggerBlink(copyBtn):copyBtn&&copyBtn[_0xe50069(0x1ed)][_0xe50069(0x18b)]('blink');}function render(){const _0x5c51c5=_0x5731b2;if(!sClipHoverActive&&!wClipHoverActive&&!nClipHoverActive){document['getElementById'](_0x5c51c5(0x1f7))[_0x5c51c5(0x1a5)]=state[_0x5c51c5(0x24b)],document[_0x5c51c5(0x224)]('Lv')[_0x5c51c5(0x1a5)]=state['length'][_0x5c51c5(0x1e9)](0x1),document['getElementById']('Dv')[_0x5c51c5(0x1a5)]=state[_0x5c51c5(0x1c2)]['toFixed'](0x1);const _0xfca1eb=lenCode(state[_0x5c51c5(0x1ce)]),_0x2997f7=['XS','S','M','L','XL'],_0xaea8a0=[_0x5c51c5(0x20f),_0x5c51c5(0x1d1),_0x5c51c5(0x23a),_0x5c51c5(0x19d),_0x5c51c5(0x1ee)];document[_0x5c51c5(0x224)]('Lc')[_0x5c51c5(0x1a5)]=_0x2997f7[_0xfca1eb-0x1]+'\x20('+_0xaea8a0[_0xfca1eb-0x1]+'\x20mm)',document[_0x5c51c5(0x224)]('Lc')[_0x5c51c5(0x227)]='tag\x20'+['xs','s','m','l','xl'][_0xfca1eb-0x1];const _0x250e8e=state['limit']>=0x1&&stitchType!==null&&state[_0x5c51c5(0x1e4)]===null;if(state[_0x5c51c5(0x1e4)]!==null)dcSpan[_0x5c51c5(0x1a5)]=getDiameterText(),dcSpan[_0x5c51c5(0x227)]=getDiameterClass();else{if(state[_0x5c51c5(0x24b)]===0x0)dcSpan[_0x5c51c5(0x1a5)]=_0x5c51c5(0x24a),dcSpan[_0x5c51c5(0x227)]='tag';else _0x250e8e?(dcSpan[_0x5c51c5(0x1a5)]=_0x5c51c5(0x236),dcSpan['className']=_0x5c51c5(0x1ba)):(dcSpan[_0x5c51c5(0x1a5)]=_0x5c51c5(0x24a),dcSpan[_0x5c51c5(0x227)]=_0x5c51c5(0x1da));}}document['getElementById']('q')['innerText']=state['qty'],renderPreviewText(),document[_0x5c51c5(0x224)]('previewCount')[_0x5c51c5(0x1b4)]=state[_0x5c51c5(0x217)]+'/'+state[_0x5c51c5(0x24b)];const _0x15cc76=state[_0x5c51c5(0x1e4)]!==null,_0x3acf2a=state['limit']>=0x1,_0x1bf413=stitchType!==null,_0x42e43f=_0x3acf2a&&_0x1bf413,_0xa1d616=_0x3acf2a&&_0x1bf413&&_0x15cc76;qtyMinusBtn&&qtyPlusBtn&&(_0xa1d616?(qtyMinusBtn['disabled']=![],qtyPlusBtn[_0x5c51c5(0x1ca)]=![],qtyMinusBtn[_0x5c51c5(0x1ed)][_0x5c51c5(0x18b)](_0x5c51c5(0x1bb)),qtyPlusBtn[_0x5c51c5(0x1ed)][_0x5c51c5(0x18b)](_0x5c51c5(0x1bb))):(qtyMinusBtn[_0x5c51c5(0x1ca)]=!![],qtyPlusBtn[_0x5c51c5(0x1ca)]=!![],qtyMinusBtn[_0x5c51c5(0x1ed)][_0x5c51c5(0x1fe)](_0x5c51c5(0x1bb)),qtyPlusBtn[_0x5c51c5(0x1ed)][_0x5c51c5(0x1fe)](_0x5c51c5(0x1bb))));document[_0x5c51c5(0x1fb)](_0x5c51c5(0x203))[_0x5c51c5(0x202)](_0x38e5d6=>_0x38e5d6[_0x5c51c5(0x1ca)]=!_0x42e43f),document['querySelectorAll'](_0x5c51c5(0x18f))[_0x5c51c5(0x202)](_0x283ee8=>_0x283ee8[_0x5c51c5(0x1ca)]=!(_0x42e43f&&_0x15cc76));if(D)D[_0x5c51c5(0x1ca)]=!(_0x42e43f&&_0x15cc76);if(L)L['disabled']=!(_0x42e43f&&_0x15cc76);document[_0x5c51c5(0x1fb)]('.card:nth-of-type(3)\x20.capsule-stepper\x20button')[_0x5c51c5(0x202)](_0x13372d=>_0x13372d[_0x5c51c5(0x1ca)]=!(_0x42e43f&&_0x15cc76));const _0x302a4a=_0x3acf2a&&_0x15cc76&&selectedColor&&state[_0x5c51c5(0x233)]>0x0;genBtn[_0x5c51c5(0x1ca)]=!_0x302a4a;const _0x4a8d58=document['querySelectorAll'](_0x5c51c5(0x1ab));_0x4a8d58['forEach'](_0x1c9abf=>{const _0x3da1c6=_0x5c51c5;_0x3acf2a&&_0x15cc76?(_0x1c9abf[_0x3da1c6(0x20c)][_0x3da1c6(0x1f6)]=_0x3da1c6(0x18a),_0x1c9abf['classList']['remove'](_0x3da1c6(0x1ca))):(_0x1c9abf[_0x3da1c6(0x20c)]['pointerEvents']=_0x3da1c6(0x244),_0x1c9abf[_0x3da1c6(0x1ed)]['add']('disabled'));});const _0xed4155=Object[_0x5c51c5(0x1a6)](state[_0x5c51c5(0x1fc)])[_0x5c51c5(0x1f9)]((_0x19dac9,_0x41c19c)=>_0x19dac9+_0x41c19c[_0x5c51c5(0x233)],0x0);copyBtn['disabled']=_0xed4155!==state[_0x5c51c5(0x24b)],drawHistory(),applyBlinking(),updateColorActiveUI(),updateTitleColor(),updateStitchButtons(),save();}function _0x1765(_0x2b2739,_0x20be36){_0x2b2739=_0x2b2739-0x188;const _0x73751a=_0x16ea();let _0x95984e=_0x73751a[_0x2b2739];return _0x95984e;}function drawHistory(){const _0x1d0e5c=_0x5731b2,_0x46f158=document[_0x1d0e5c(0x224)](_0x1d0e5c(0x1fc));_0x46f158[_0x1d0e5c(0x1b4)]='';const _0x119890=state['historyOrder']||[];for(const _0xb3924 of _0x119890){const _0x9ce796=state[_0x1d0e5c(0x1fc)][_0xb3924];if(!_0x9ce796)continue;const _0x4690b3=document[_0x1d0e5c(0x1af)](_0x1d0e5c(0x1e2));_0x4690b3[_0x1d0e5c(0x227)]=_0x1d0e5c(0x19e);const _0x2aebda=_0x9ce796[_0x1d0e5c(0x233)],_0x46aaf2=clean(_0x9ce796[_0x1d0e5c(0x1ef)]),_0xd07aa7=clean(_0x9ce796['diaVal']),_0x3fabc8=getModeDisplayName(_0x9ce796[_0x1d0e5c(0x205)]),_0x312bb3=_0x9ce796[_0x1d0e5c(0x20a)]?_0x9ce796['stitchType']===_0x1d0e5c(0x1f3)?_0x1d0e5c(0x1fd):_0x1d0e5c(0x1c5):'—',_0x55673c=COLOR_DISPLAY_MAP[_0x9ce796['color']]||_0x9ce796[_0x1d0e5c(0x1cb)],_0x764687=COLOR_TEXT_MAP[_0x9ce796[_0x1d0e5c(0x1cb)]]||_0x1d0e5c(0x23d),_0x34163f=document[_0x1d0e5c(0x1af)]('span');_0x34163f['className']=_0x1d0e5c(0x245),_0x34163f['innerHTML']=_0x1d0e5c(0x1b6)+_0x9ce796['code']+_0x1d0e5c(0x1d7)+_0x2aebda+_0x1d0e5c(0x23f)+_0x46aaf2+_0x1d0e5c(0x215)+_0xd07aa7+'</span>-\x0a\x20\x20\x20\x20\x20\x20<span\x20class=\x22highlight-number\x22>'+_0x3fabc8+_0x1d0e5c(0x21d)+_0x764687+_0x1d0e5c(0x204)+_0x55673c+_0x1d0e5c(0x200)+_0x312bb3+_0x1d0e5c(0x1eb);const _0x3aabe5=document[_0x1d0e5c(0x1af)](_0x1d0e5c(0x21f));_0x3aabe5[_0x1d0e5c(0x227)]='del',_0x3aabe5['innerText']='删除',_0x3aabe5[_0x1d0e5c(0x1be)]=_0x49b0e1=>{const _0xaaee21=_0x1d0e5c;_0x49b0e1[_0xaaee21(0x1b3)](),showDeleteConfirm(_0xb3924,_0x9ce796[_0xaaee21(0x233)]);},_0x4690b3[_0x1d0e5c(0x1e3)](_0x34163f),_0x4690b3[_0x1d0e5c(0x1e3)](_0x3aabe5),_0x46f158[_0x1d0e5c(0x1e3)](_0x4690b3);}}function copy(){const _0x142321=_0x5731b2,_0x5954a7=Object[_0x142321(0x1a6)](state[_0x142321(0x1fc)])[_0x142321(0x1f9)]((_0x527d1d,_0x94ee94)=>_0x527d1d+_0x94ee94['qty'],0x0);if(_0x5954a7!==state[_0x142321(0x24b)]){toast(_0x142321(0x196));return;}if(!Object['keys'](state[_0x142321(0x1fc)])[_0x142321(0x1ce)])return;const _0x9224be=[];for(const _0x5d5461 in state[_0x142321(0x1fc)]){const _0x356ed5=state[_0x142321(0x1fc)][_0x5d5461],_0x4f46b0=parseInt(_0x356ed5['code'],0xa);_0x9224be[_0x142321(0x1d2)]({'codeNum':_0x4f46b0,'code':_0x356ed5[_0x142321(0x1b9)],'qty':_0x356ed5['qty'],'lengthVal':_0x356ed5[_0x142321(0x1ef)],'diaVal':_0x356ed5[_0x142321(0x1f2)],'modeVal':_0x356ed5['modeVal'],'stitchType':_0x356ed5['stitchType'],'color':_0x356ed5['color']});}_0x9224be[_0x142321(0x20d)]((_0x51c704,_0x330d2b)=>_0x330d2b['codeNum']-_0x51c704['codeNum']);let _0xe9e8b='已配置\x20'+state['used']+'/'+state['limit']+'\x0a\x0a';for(const _0x321a1e of _0x9224be){const _0x4d2dad=getModeDisplayName(_0x321a1e['modeVal']),_0x55f9ab=_0x321a1e[_0x142321(0x20a)]?_0x321a1e[_0x142321(0x20a)]===_0x142321(0x1f3)?_0x142321(0x1fd):_0x142321(0x1c5):'—',_0x353886=COLOR_DISPLAY_MAP[_0x321a1e[_0x142321(0x1cb)]]||_0x321a1e[_0x142321(0x1cb)];_0xe9e8b+=_0x321a1e[_0x142321(0x1b9)]+'\x20×\x20'+_0x321a1e['qty']+_0x142321(0x18e)+clean(_0x321a1e[_0x142321(0x1ef)])+'-Ø'+clean(_0x321a1e[_0x142321(0x1f2)])+'-'+_0x4d2dad+'-'+_0x353886+'-'+_0x55f9ab+')\x0a';}navigator[_0x142321(0x1a0)][_0x142321(0x21e)](_0xe9e8b),toast(_0x142321(0x23b)),copyBtn['classList']['remove'](_0x142321(0x1db));}function toast(_0x2b0eec){const _0x1a076e=_0x5731b2,_0x33cf0e=document[_0x1a076e(0x224)]('toast');_0x33cf0e[_0x1a076e(0x1a5)]=_0x2b0eec,_0x33cf0e[_0x1a076e(0x20c)][_0x1a076e(0x1a4)]=0x1,setTimeout(()=>_0x33cf0e['style']['opacity']=0x0,0x5dc);}document['addEventListener'](_0x5731b2(0x19f),_0x20242b=>{const _0x4d96d3=_0x5731b2;_0x20242b[_0x4d96d3(0x211)]&&_0x20242b['target'][_0x4d96d3(0x1de)]===_0x4d96d3(0x1a7)&&stopBlinking();});function enableLongPressStepper(){const _0xcb6e72=_0x5731b2,_0x5caee2=_0xcb6e72(0x232)in window||navigator[_0xcb6e72(0x1b1)]>0x0;document['querySelectorAll'](_0xcb6e72(0x21a))[_0xcb6e72(0x202)](_0x401480=>{const _0x80f502=_0xcb6e72;if(_0x5caee2)return;let _0x40ce3f=null;const _0xfefa02=()=>{if(_0x40ce3f)return;_0x40ce3f=setTimeout(()=>{const _0x5a534f=_0x1765;_0x40ce3f=setInterval(()=>_0x401480[_0x5a534f(0x19f)](),0x50);},0x12c);},_0x2080fa=()=>{clearTimeout(_0x40ce3f),clearInterval(_0x40ce3f),_0x40ce3f=null;};_0x401480['addEventListener']('mousedown',_0xfefa02),_0x401480['addEventListener'](_0x80f502(0x1e6),_0x2080fa),_0x401480[_0x80f502(0x22c)](_0x80f502(0x1b5),_0x2080fa);});}initColorSelector(),render(),enableLongPressStepper();
+  </script>
+
+</body>
+</html>
