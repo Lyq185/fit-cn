@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>笔套适配系统 V5.0</title>
+  <style>
+    /* ========== 所有样式保持不变 ========== */
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+      background:#000000;
+      color:#e5e7eb;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    .app{
+      width:100%;
+      max-width:480px;
+      padding:16px;
+      box-sizing: border-box;
+    }
+
+    h1{
+      text-align:center;
+      font-size:20px;
+      font-weight:600;
+      color:#f0f0f0;
+      text-shadow:0 0 2px rgba(255,255,255,0.2);
+    }
+
+    .card{
+      background:#0c0c0c;
+      border-radius:18px;
+      border:1px solid #3a4a6a;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+      padding:10px 14px;
+      margin-bottom:10px;
+      transition: border-color 0.1s ease;
+    }
+
+    .card:hover{
+      border-color:#5a7a9a;
+    }
+
+    input[type="range"]{
+      width:100%;
+      margin-top:10px;
+      height:10px;
+      -webkit-appearance: none;
+      background:#2a2e3a;
+      border-radius:10px;
+      outline: none;
+    }
+    input[type="range"]:focus{
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f97316;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 6px #f97316;
+      cursor: pointer;
+    }
+
+    .row{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:6px;
+    }
+
+    .stepper-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .stepper-row .stepper-label {
+      font-size: 18px;
+    }
+    .stepper-row .capsule-stepper {
+      margin-left: auto;
+    }
+
+    .first-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      flex-wrap: nowrap;
+    }
+    .first-row .capsule-stepper {
+      flex-shrink: 0;
+    }
+    .first-row .stitch-group {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .stitch-btn {
+      padding: 8px 14px 10px 14px;
+      font-size: 18px;
+      border-radius: 40px;
+      border: 1px solid #4b5563;
+      background: #0a0a0a;
+      color: #fff;
+      font-weight: 400;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      height: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stitch-btn:hover:not(.active) {
+      background: #2a2a2a;
+      border-color: #6b7280;
+    }
+    .stitch-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+      box-shadow: 0 0 8px #3b82f6;
+    }
+    .stitch-btn.disabled {
+      cursor: pointer;
+    }
+    .stitch-btn.pending {
+      animation: slowBlinkOnce 2.4s ease-in-out 1;
+      border-color: #4b5563;
+    }
+    .stitch-btn.active {
+      animation: none;
+    }
+
+    @keyframes slowBlinkOnce {
+      0% { opacity: 1; }
+      25% { opacity: 0.25; }
+      50% { opacity: 1; }
+      75% { opacity: 0.25; }
+      100% { opacity: 1; }
+    }
+
+    .big{
+      font-size:24px;
+      font-weight:400;
+    }
+
+    .tag{
+      font-size:18px;
+      font-weight:600;
+      padding:6px 12px;
+      border-radius: 40px;
+      background:#1a1a1a;
+      text-align:center;
+      border: 1px solid #3a3f4e;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 12px;
+    }
+
+    .tag.xs{background:#2b6e3c; border-color:#6fbf4c;}
+    .tag.s{background:#1e5a8a; border-color:#3b82f6;}
+    .tag.m{background:#6b21a5; border-color:#c084fc;}
+    .tag.l{background:#b45309; border-color:#f97316;}
+    .tag.xl{background:#9b2c2c; border-color:#ef4444;}
+
+    .tag.d1{background:#0e6b8f; border-color:#22d3ee;}
+    .tag.d2{background:#0f766e; border-color:#2dd4bf;}
+    .tag.d3{background:#a16207; border-color:#facc15;}
+    .tag.d4{background:#c2410c; border-color:#fb923c;}
+    .tag.d5{background:#b91c1c; border-color:#f87171;}
+    .tag.d6{background:#a21caf; border-color:#e879f9;}
+    .tag.d7{background:#7c3aed; border-color:#a78bfa;}
+
+    .tag.mode-hint {
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid #ffb347;
+      box-shadow: 0 0 6px rgba(249,115,22,0.4);
+      border-radius: 40px;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 12px;
+    }
+
+    .capsule-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #0a0a0c;
+      padding: 3px 6px;
+      border-radius: 40px;
+      border: 1px solid #2a2e3f;
+      height: 36px;
+      font-size: 0;
+      transition: border-color 0.1s ease;
+    }
+
+    .capsule-stepper button {
+      background: #1c1c22;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: 0.1s linear;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .capsule-stepper button:active {
+      transform: scale(0.92);
+      background: #2c2c34;
+    }
+
+    .capsule-stepper .value {
+      font-size: 1.25rem;
+      font-weight: 500;
+      text-align: center;
+      color: #facc15;
+      min-width: auto;
+      padding: 0 2px;
+      white-space: nowrap;
+    }
+
+    .capsule-stepper button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+      transform: none;
+    }
+
+    /* 胶囊步进器慢闪动画 */
+    @keyframes capsuleBlink {
+      0% { border-color: #2a2e3f; }
+      25% { border-color: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.3); }
+      50% { border-color: #2a2e3f; }
+      75% { border-color: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.3); }
+      100% { border-color: #2a2e3f; }
+    }
+
+    .capsule-stepper.blink {
+      animation: capsuleBlink 2.4s ease-in-out 1;
+    }
+
+    #limitVal,
+    #q {
+      font-size: 1.25rem;
+      font-weight: 500;
+      text-align: center;
+      color: #facc15;
+      min-width: auto;
+      padding: 0 2px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .switch{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .switch button{
+      width:40px;
+      height:40px;
+      padding:0;
+      font-size:17px;
+      font-weight:600;
+      border-radius:50%;
+      border:2px solid #4b5563;
+      background:#0a0a0a;
+      color:#fff;
+      transition: all 0.2s ease;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    .switch button:hover:not(.active) {
+      background: #2a2a2a;
+      border-color: #6b7280;
+    }
+
+    .switch button.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+      box-shadow: 0 0 10px rgba(59,130,246,0.5);
+    }
+
+    .switch button:disabled {
+      opacity:0.4;
+      cursor:not-allowed;
+      pointer-events:none;
+    }
+
+    .color-module-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .color-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 18px;
+      font-weight: 500;
+      color: #e5e7eb;
+      background: transparent;
+      padding: 0;
+      border: none;
+    }
+    .color-label-icon {
+      font-size: 18px;
+    }
+    .color-label-text {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    @keyframes slowBlink {
+      0% { opacity: 1; }
+      25% { opacity: 0.25; }
+      50% { opacity: 1; }
+      75% { opacity: 0.25; }
+      100% { opacity: 1; }
+    }
+    #hint.blink, #c1.blink, #c2.blink, #c3.blink, #copyBtn.blink, .color-label.blink, .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+    .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+    .color-chips-group {
+      display: flex;
+      gap: 10px;
+    }
+    .color-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 36px;
+      transition: 0.08s linear;
+      cursor: pointer;
+      overflow: visible;
+      flex-shrink: 0;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .color-chip img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      border-radius: 50%;
+      position: relative;
+      z-index: 1;
+    }
+    .color-chip.no-image {
+      background-size: 60%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .color-chip .custom-tooltip {
+      position: absolute;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      line-height: 1.3;
+      font-family: inherit;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .color-chip:hover .custom-tooltip {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    .color-chip.active {
+      outline: 3px solid #facc15;
+      outline-offset: 2px;
+      transform: scale(0.96);
+    }
+    .color-chip.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+      .color-chip .custom-tooltip {
+        padding: 6px 14px;
+        font-size: 14px;
+        bottom: 42px;
+      }
+    }
+
+    .color-name-in-history {
+      font-weight: 400;
+      margin-left: 0px;
+      white-space: nowrap;
+    }
+
+    .item{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0e0e12;
+      border: 1px solid #2d3345;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 18px;
+      line-height: 1.4;
+      gap: 10px;
+      transition: border 0.1s;
+    }
+    .item:hover{
+      border-color: #f97316;
+    }
+
+    .item-code {
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px;
+      flex: 1;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .highlight-number {
+      color: #f97316;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .del{
+      background: #2a2a2a;
+      border: 1px solid #4b5563;
+      color: #e5e7eb;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .del:hover{
+      background: #f97316;
+      border-color: #ffb347;
+      color: #0b0f17;
+    }
+
+    .bottom{
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      display:flex;
+      justify-content:center;
+      background:linear-gradient(to top, #000000, transparent);
+      padding-bottom:16px;
+      padding-top:12px;
+      box-sizing:border-box;
+    }
+
+    .bottom-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 0 16px;
+      box-sizing: border-box;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .bottom button {
+      flex: 1;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: transform 0.05s linear;
+    }
+
+    .bottom button:active {
+      transform: scale(0.97);
+    }
+
+    .bottom button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #genBtn {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 2px 8px #1e3a8a;
+    }
+    #copyBtn {
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+      border: 1px solid #ffb366;
+    }
+    #clearBtn {
+      background: #dc2626;
+      color: white;
+      box-shadow: 0 2px 6px #7f1a1a;
+    }
+
+    .toast{
+      position:fixed;
+      bottom:90px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#1f2937;
+      backdrop-filter: blur(8px);
+      color:#facc15;
+      padding:10px 18px;
+      border-radius:40px;
+      font-weight:600;
+      border-left: 3px solid #f97316;
+      opacity:0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 200;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    #confirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #confirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #confirmText {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: break-word;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 14px;
+      padding: 14px 16px;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    #confirmHint {
+      font-size: 20px;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    #confirmHint.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+
+    .confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #confirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #confirmSave {
+      background:#22c55e;
+      color:#000;
+    }
+
+    #clearConfirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #clearConfirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #clearConfirmText {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: keep-all;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 40px;
+      padding: 10px 20px;
+      width: auto;
+      display: inline-block;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .clear-confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .clear-confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #clearConfirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #clearConfirmOK {
+      background:#22c55e;
+      color:#000;
+    }
+
+    #deleteConfirmPanel {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.92);
+      backdrop-filter: blur(4px);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+    }
+
+    #deleteConfirmBox {
+      background:#121212;
+      border-radius:20px;
+      padding:24px 20px;
+      width:90%;
+      max-width:400px;
+      text-align:center;
+      border: 1px solid #2a2e3a;
+      box-shadow:0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    #deleteConfirmText {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      word-break: keep-all;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      border-radius: 40px;
+      padding: 10px 20px;
+      width: auto;
+      display: inline-block;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .delete-confirm-btns {
+      display:flex;
+      gap:12px;
+    }
+
+    .delete-confirm-btns button {
+      flex:1;
+      padding:12px;
+      font-size:18px;
+      font-weight:600;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #deleteConfirmCancel {
+      background:#374151;
+      color:#fff;
+    }
+
+    #deleteConfirmOK {
+      background:#dc2626;
+      color:#fff;
+    }
+
+    #historyPanel {
+      width:100%;
+      max-width:480px;
+      margin:0 auto;
+      box-sizing:border-box;
+      padding-bottom:120px;
+    }
+
+    #previewCount {
+      color: #FCD34D;
+      font-weight: 400;
+      letter-spacing: 3px;
+    }
+
+    #preview {
+      text-align: center;
+      font-weight: 600;
+      background: transparent;
+      padding: 12px 0;
+      border: none;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 12px 0 0 0;
+    }
+
+    #previewCard .row div[style*="font-size:18px"] {
+      font-weight: 400 !important;
+    }
+
+    #previewCard .row label {
+      font-weight: 400 !important;
+    }
+
+    .hint{
+      font-size:16px;
+      font-weight:600;
+      color:#FCD34D;
+      white-space:nowrap;
+      transform: translateX(-6px);
+    }
+
+    #hint.blink, #c1.blink, #c2.blink, #c3.blink, #copyBtn.blink, .color-label.blink, .color-chip.blink {
+      animation: slowBlink 2.4s ease-in-out 1;
+    }
+
+    #Lc{
+      font-size:20px;
+    }
+
+    #Dc{
+      font-size:20px;
+    }
+
+    #copyBtn {
+      border: 2px solid #f97316;
+      background: #f97316;
+      color: #0b0f17;
+      font-weight: 600;
+    }
+
+    #supportedQtyTitle {
+      font-weight: 600 !important;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <h1>✒️ 笔套适配系统 V5.0</h1>
+
+  <div class="card">
+    <div class="first-row">
+      <div class="capsule-stepper" id="qtyStepper" style="margin:0;">
+        <button onclick="setLimit(-1)">–</button>
+        <span class="value" id="limitVal">0</span>
+        <button onclick="setLimit(1)">+</button>
+      </div>
+      <div class="stitch-group">
+        <button class="stitch-btn disabled" id="crossBtn" onclick="selectStitch('cross')">交叉缝</button>
+        <button class="stitch-btn disabled" id="saddleBtn" onclick="selectStitch('saddle')">马鞍缝</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <input type="range" id="D" min="7" max="18.5" step="0.1" value="7">
+    <div style="margin-top:12px;">
+      <div class="stepper-row">
+        <div class="switch" style="margin:0;gap:8px;">
+          <button id="c1" onclick="mode('clipless')">N</button>
+          <button id="c2" onclick="mode('clipped')">S</button>
+          <button id="c3" onclick="mode('w_clip')">W</button>
+        </div>
+        <div class="capsule-stepper" style="margin:0;">
+          <button id="diaMinusBtn" onclick="diaStep(-0.1)">–</button>
+          <span class="value" id="Dv">7.0</span>
+          <button id="diaPlusBtn" onclick="diaStep(0.1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="tag" id="Dc" style="margin-top:12px;text-align:center;"></div>
+  </div>
+
+  <div class="card">
+    <input type="range" min="85" max="165" step="1" value="85" id="L">
+    <div class="stepper-row" style="margin-top:12px;">
+      <div class="stepper-label">📏 长度</div>
+      <div class="capsule-stepper" style="margin:0;">
+        <button onclick="lenStep(-0.1)">–</button>
+        <span class="value" id="Lv">85.0</span>
+        <button onclick="lenStep(0.1)">+</button>
+      </div>
+    </div>
+    <div class="tag" id="Lc" style="margin-top:12px;text-align:center;"></div>
+  </div>
+
+  <div class="card" id="colorCard">
+    <div class="color-module-row">
+      <div class="color-label" id="colorLabel">
+        <span class="color-label-icon">🎨</span>
+        <span class="color-label-text">皮革</span>
+      </div>
+      <div class="color-chips-group" id="colorChipsGroup">
+        <div class="color-chip" data-color="Caramel" style="background-color: #c68a4e;">
+          <img src="images/Caramel.png" alt="Caramel" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #c68a4e;">焦糖色</span>
+        </div>
+        <div class="color-chip" data-color="Yellow" style="background-color: #f5d742;">
+          <img src="images/Yellow.png" alt="Yellow" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #f5d742;">黄色</span>
+        </div>
+        <div class="color-chip" data-color="Nero" style="background-color: #4a4a4a;">
+          <img src="images/Nero.png" alt="Nero" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #4a4a4a;">乌木黑</span>
+        </div>
+        <div class="color-chip" data-color="Red" style="background-color: #d43030;">
+          <img src="images/Red.png" alt="Red" onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('no-image');">
+          <span class="custom-tooltip" style="color: #d43030;">红色</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="previewCard">
+    <div class="stepper-row">
+      <div class="stepper-label">
+        <label style="font-size:20px;">✨ 适配预览</label>
+        <div class="big" id="previewCount" style="font-size:22px; display:inline-block; margin-left:6px;"></div>
+      </div>
+      <div class="capsule-stepper" style="margin:0;">
+        <button id="qtyMinusBtn" class="qty-control-btn" onclick="handleQtyChange(-1)">–</button>
+        <span class="value" id="q">0</span>
+        <button id="qtyPlusBtn" class="qty-control-btn" onclick="handleQtyChange(1)">+</button>
+      </div>
+    </div>
+    <div id="preview" style="font-size:26px; word-break:break-word;"></div>
+  </div>
+
+  <div id="historyPanel">
+    <div id="history"></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bottom-container">
+      <div class="bottom-buttons">
+        <button id="genBtn" onclick="showConfirm()">保存</button>
+        <button id="copyBtn" onclick="copy()" disabled>复制</button>
+        <button id="clearBtn" onclick="showClearConfirm()">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div id="confirmPanel">
+    <div id="confirmBox">
+      <div id="confirmText"></div>
+      <div id="confirmHint">请确认</div>
+      <div class="confirm-btns">
+        <button id="confirmCancel" onclick="hideConfirm()">取消</button>
+        <button id="confirmSave" onclick="doSave()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="clearConfirmPanel">
+    <div id="clearConfirmBox">
+      <div id="clearConfirmText">清除所有数据吗？</div>
+      <div class="clear-confirm-btns">
+        <button id="clearConfirmCancel" onclick="hideClearConfirm()">取消</button>
+        <button id="clearConfirmOK" onclick="doClear()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteConfirmPanel">
+    <div id="deleteConfirmBox">
+      <div id="deleteConfirmText">删除此配置吗？</div>
+      <div class="delete-confirm-btns">
+        <button id="deleteConfirmCancel" onclick="hideDeleteConfirm()">取消</button>
+        <button id="deleteConfirmOK" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function clean(v) {
+      return Number.isInteger(v) ? v.toString() : v.toFixed(1);
+    }
+
+    let stitchType = null;
+
+    function selectStitch(type) {
+      // 配额已满时，阻止切换 Cross/Saddle，弹出 toast，触发 Copy All 慢闪
+      if (state.used === state.limit && state.limit > 0) {
+        toast("配额已满，如需调整请先删除或增加数量");
+        render();
+        return;
+      }
+
+      if (state.limit === 0) {
+        toast("请先设置数量");
+        triggerCapsuleBlink();  // 触发胶囊步进器慢闪，引导用户去设置数量
+        return;
+      }
+      if (stitchType === type) return;
+      stitchType = type;
+      updateStitchButtons();
+      applyModeConstraints();
+      render();
+      save();
+    }
+
+    function updateStitchButtons() {
+      const crossBtn = document.getElementById('crossBtn');
+      const saddleBtn = document.getElementById('saddleBtn');
+      if (!crossBtn || !saddleBtn) return;
+
+      if (state.limit === 0) {
+        crossBtn.classList.add('disabled');
+        saddleBtn.classList.add('disabled');
+        crossBtn.classList.remove('pending', 'active');
+        saddleBtn.classList.remove('pending', 'active');
+        return;
+      }
+
+      crossBtn.classList.remove('disabled');
+      saddleBtn.classList.remove('disabled');
+
+      if (stitchType === 'cross') {
+        crossBtn.classList.add('active');
+        crossBtn.classList.remove('pending');
+        saddleBtn.classList.remove('active', 'pending');
+      } else if (stitchType === 'saddle') {
+        saddleBtn.classList.add('active');
+        saddleBtn.classList.remove('pending');
+        crossBtn.classList.remove('active', 'pending');
+      } else {
+        crossBtn.classList.remove('active');
+        saddleBtn.classList.remove('active');
+        crossBtn.classList.add('pending');
+        saddleBtn.classList.add('pending');
+      }
+    }
+
+    function flashStitchButtons() {
+      const crossBtn = document.getElementById('crossBtn');
+      const saddleBtn = document.getElementById('saddleBtn');
+      if (!crossBtn || !saddleBtn) return;
+      if (state.limit === 0) return;
+      if (stitchType !== null) return;
+      crossBtn.classList.remove('pending');
+      void crossBtn.offsetWidth;
+      crossBtn.classList.add('pending');
+      saddleBtn.classList.remove('pending');
+      void saddleBtn.offsetWidth;
+      saddleBtn.classList.add('pending');
+      setTimeout(() => {
+        crossBtn.classList.remove('pending');
+        saddleBtn.classList.remove('pending');
+      }, 2500);
+    }
+
+    function showColorPickHint() {
+      const colorLabel = document.getElementById('colorLabel');
+      const colorChips = document.querySelectorAll('.color-chip');
+
+      if (colorLabel) {
+        colorLabel.style.animation = 'none';
+        colorLabel.offsetHeight;
+        colorLabel.style.animation = '';
+        colorLabel.classList.add('blink');
+        setTimeout(() => {
+          colorLabel.classList.remove('blink');
+        }, 2400);
+      }
+
+      colorChips.forEach(chip => {
+        chip.style.animation = 'none';
+        chip.offsetHeight;
+        chip.style.animation = '';
+        chip.classList.add('blink');
+        setTimeout(() => {
+          chip.classList.remove('blink');
+        }, 2400);
+      });
+    }
+
+    function stopColorBlink() {
+      const colorLabel = document.getElementById('colorLabel');
+      const colorChips = document.querySelectorAll('.color-chip');
+
+      if (colorLabel) {
+        colorLabel.classList.remove('blink');
+        colorLabel.style.animation = '';
+      }
+      colorChips.forEach(chip => {
+        chip.classList.remove('blink');
+        chip.style.animation = '';
+      });
+    }
+
+    let pendingDeleteKey = null;
+    let pendingDeleteQty = null;
+
+    const COLOR_LIST = ['Caramel', 'Yellow', 'Nero', 'Red'];
+    const COLOR_TEXT_MAP = {
+      'Caramel': '#c68a4e',
+      'Yellow': '#f5d742',
+      'Nero': '#4a4a4a',
+      'Red': '#d43030'
+    };
+    const COLOR_DISPLAY_MAP = {
+      'Caramel': '焦糖色',
+      'Yellow': '黄色',
+      'Nero': '乌木黑',
+      'Red': '红色'
+    };
+
+    let selectedColor = null;
+
+    let state = {
+      limit: 0,
+      used: 0,
+      qty: 0,
+      mode: null,
+      length: 85,
+      dia: 7,
+      history: {},
+      historyOrder: []
+    };
+
+    const L = document.getElementById("L");
+    const D = document.getElementById("D");
+    const c1 = document.getElementById("c1");
+    const c2 = document.getElementById("c2");
+    const c3 = document.getElementById("c3");
+    const genBtn = document.getElementById("genBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const dcSpan = document.getElementById("Dc");
+    const colorSelectTitleSpan = document.getElementById("colorSelectTitle");
+    const qtyPlusBtn = document.getElementById("qtyPlusBtn");
+    const qtyMinusBtn = document.getElementById("qtyMinusBtn");
+    const previewDiv = document.getElementById("preview");
+    const qtyStepper = document.getElementById("qtyStepper");
+
+    // 显示模式名称映射（用于预览、历史、弹窗等显示）
+    function getModeDisplayName(modeVal) {
+      const modeMap = {
+        'clipped': 'S',
+        'clipless': 'N',
+        'w_clip': 'W'
+      };
+      return modeVal ? (modeMap[modeVal] || modeVal) : "—";
+    }
+
+    // ========== 胶囊步进器慢闪控制 ==========
+    function triggerCapsuleBlink() {
+      if (!qtyStepper) return;
+      qtyStepper.classList.remove('blink');
+      void qtyStepper.offsetWidth;
+      requestAnimationFrame(() => {
+        qtyStepper.classList.add('blink');
+      });
+      setTimeout(() => {
+        if (qtyStepper) qtyStepper.classList.remove('blink');
+      }, 2500);
+    }
+
+    function stopCapsuleBlink() {
+      if (qtyStepper) qtyStepper.classList.remove('blink');
+    }
+
+    // ========== 悬停状态强制重置（移动端修复） ==========
+    function resetAllHoverStates() {
+      // 强制退出 N 悬停
+      if (nClipHoverActive) {
+        updateDcForNClipHover(false);
+      }
+      // 强制退出 S 悬停
+      if (sClipHoverActive) {
+        updateDcForSClipHover(false);
+      }
+      // 强制退出 W 悬停
+      if (wClipHoverActive) {
+        updateDcForWClipHover(false);
+      }
+    }
+
+    // ========== S 悬停提示功能 ==========
+    let sClipHoverActive = false;
+    let savedDcText = '';
+    let savedDcClass = '';
+
+    function updateDcForSClipHover(show) {
+      if (show) {
+        savedDcText = dcSpan.innerText;
+        savedDcClass = dcSpan.className;
+        dcSpan.innerText = '笔夹: W≤9mm & H≤7mm';
+        dcSpan.className = 'tag mode-hint';
+        sClipHoverActive = true;
+      } else {
+        // 修复：先重置状态，再调用 render()
+        sClipHoverActive = false;
+        render();
+      }
+    }
+
+    // ========== W 悬停提示功能 ==========
+    let wClipHoverActive = false;
+    let savedDcTextW = '';
+    let savedDcClassW = '';
+
+    function updateDcForWClipHover(show) {
+      if (show) {
+        savedDcTextW = dcSpan.innerText;
+        savedDcClassW = dcSpan.className;
+        dcSpan.innerText = '笔夹: W>9mm or H>7mm';
+        dcSpan.className = 'tag mode-hint';
+        wClipHoverActive = true;
+      } else {
+        // 修复：先重置状态，再调用 render()
+        wClipHoverActive = false;
+        render();
+      }
+    }
+
+    // ========== N 悬停提示功能 ==========
+    let nClipHoverActive = false;
+    let savedDcTextN = '';
+    let savedDcClassN = '';
+
+    function updateDcForNClipHover(show) {
+      if (show) {
+        savedDcTextN = dcSpan.innerText;
+        savedDcClassN = dcSpan.className;
+        dcSpan.innerText = '无笔夹 (mm)';
+        dcSpan.className = 'tag mode-hint';
+        nClipHoverActive = true;
+      } else {
+        // 修复：先重置状态，再调用 render()
+        nClipHoverActive = false;
+        render();
+      }
+    }
+
+    // 为 S 按钮绑定悬停事件
+    c2.addEventListener('mouseenter', function() {
+      if (!this.disabled) {
+        if (wClipHoverActive) {
+          updateDcForWClipHover(false);
+        }
+        if (nClipHoverActive) {
+          updateDcForNClipHover(false);
+        }
+        updateDcForSClipHover(true);
+      }
+    });
+
+    c2.addEventListener('mouseleave', function() {
+      updateDcForSClipHover(false);
+    });
+
+    // 为 W 按钮绑定悬停事件
+    c3.addEventListener('mouseenter', function() {
+      if (!this.disabled) {
+        if (sClipHoverActive) {
+          updateDcForSClipHover(false);
+        }
+        if (nClipHoverActive) {
+          updateDcForNClipHover(false);
+        }
+        updateDcForWClipHover(true);
+      }
+    });
+
+    c3.addEventListener('mouseleave', function() {
+      updateDcForWClipHover(false);
+    });
+
+    // 为 N 按钮绑定悬停事件
+    c1.addEventListener('mouseenter', function() {
+      if (!this.disabled) {
+        if (sClipHoverActive) {
+          updateDcForSClipHover(false);
+        }
+        if (wClipHoverActive) {
+          updateDcForWClipHover(false);
+        }
+        updateDcForNClipHover(true);
+      }
+    });
+
+    c1.addEventListener('mouseleave', function() {
+      updateDcForNClipHover(false);
+    });
+
+    // ========== 结束悬停提示 ==========
+
+    function updateTitleColor() {
+      if (!colorSelectTitleSpan) return;
+      if (selectedColor && COLOR_TEXT_MAP[selectedColor]) {
+        colorSelectTitleSpan.style.color = COLOR_TEXT_MAP[selectedColor];
+      } else {
+        colorSelectTitleSpan.style.color = '#ffffff';
+      }
+    }
+
+    function stopBlinking() {
+      if (copyBtn) copyBtn.classList.remove("blink");
+      if (c1) c1.classList.remove("blink");
+      if (c2) c2.classList.remove("blink");
+      if (c3) c3.classList.remove("blink");
+      stopCapsuleBlink();
+      const confirmHint = document.getElementById("confirmHint");
+      if (confirmHint) confirmHint.classList.remove("blink");
+    }
+
+    function triggerBlink(element) {
+      if (!element) return;
+      element.classList.remove("blink");
+      void element.offsetWidth;
+      requestAnimationFrame(() => {
+        element.classList.add("blink");
+      });
+      setTimeout(() => {
+        if (element) element.classList.remove("blink");
+      }, 2500);
+    }
+
+    function initColorSelector() {
+      const chips = document.querySelectorAll('.color-chip');
+      chips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const limitSet = state.limit >= 1;
+          const hasMode = state.mode !== null;
+          if (!limitSet || !hasMode) {
+            toast("请先设置数量并选择笔夹类型");
+            return;
+          }
+          const col = chip.getAttribute('data-color');
+          if (col && COLOR_LIST.includes(col)) {
+            selectedColor = col;
+            updateColorActiveUI();
+            updateTitleColor();
+            renderPreviewText();
+            render();
+            save();
+            stopColorBlink();
+          }
+        });
+      });
+    }
+
+    function updateColorActiveUI() {
+      const chips = document.querySelectorAll('.color-chip');
+      chips.forEach(chip => {
+        const col = chip.getAttribute('data-color');
+        if (selectedColor && col === selectedColor) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
+
+    function renderPreviewText() {
+      if (!previewDiv) return;
+      const hasMode = state.mode !== null;
+      const modeText = getModeDisplayName(state.mode);
+      const stitchText = stitchType ? (stitchType === 'cross' ? '交叉缝' : '马鞍缝') : "—";
+      const hl = "#f97316";
+      let previewCode = "?";
+      if (state.mode) previewCode = toolCode();
+      else previewCode = "—";
+
+      if (hasMode && selectedColor) {
+        const displayName = COLOR_DISPLAY_MAP[selectedColor] || selectedColor;
+        const colorHex = COLOR_TEXT_MAP[selectedColor] || '#ffb347';
+        const colorPreviewSegment = `<span style="color: ${colorHex}; font-weight: 600;">${displayName}</span>`;
+        const fullPreviewHtml = previewCode + " × <span style='color:" + hl + "; font-weight:600;'>" + state.qty + "</span>" +
+          " (L<span style='color:" + hl + "; font-weight:600;'>" + clean(state.length) + "</span>-Ø<span style='color:" + hl + "; font-weight:600;'>" + clean(state.dia) + "</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + modeText + "</span>-" +
+          colorPreviewSegment + "-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + stitchText + "</span>)";
+        previewDiv.innerHTML = fullPreviewHtml;
+      } else if (hasMode && !selectedColor) {
+        const fullPreviewHtml = previewCode + " × <span style='color:" + hl + "; font-weight:600;'>" + state.qty + "</span>" +
+          " (L<span style='color:" + hl + "; font-weight:600;'>" + clean(state.length) + "</span>-Ø<span style='color:" + hl + "; font-weight:600;'>" + clean(state.dia) + "</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + modeText + "</span>-" +
+          "<span style='color:#ffb347; font-weight:600;'>?</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + stitchText + "</span>)";
+        previewDiv.innerHTML = fullPreviewHtml;
+      } else if (!hasMode && stitchType !== null) {
+        const fullPreviewHtml = "— × <span style='color:" + hl + "; font-weight:600;'>" + state.qty + "</span>" +
+          " (L<span style='color:" + hl + "; font-weight:600;'>" + clean(state.length) + "</span>-Ø<span style='color:" + hl + "; font-weight:600;'>" + clean(state.dia) + "</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>—</span>-" +
+          "<span style='color:#ffb347; font-weight:600;'>?</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + stitchText + "</span>)";
+        previewDiv.innerHTML = fullPreviewHtml;
+      } else {
+        const fullPreviewHtml = previewCode + " × <span style='color:" + hl + "; font-weight:600;'>" + state.qty + "</span>" +
+          " (L<span style='color:" + hl + "; font-weight:600;'>" + clean(state.length) + "</span>-Ø<span style='color:" + hl + "; font-weight:600;'>" + clean(state.dia) + "</span>-" +
+          "<span style='color:" + hl + "; font-weight:600;'>" + modeText + "</span>)";
+        previewDiv.innerHTML = fullPreviewHtml;
+      }
+    }
+
+    function applyModeConstraints() {
+      let minVal, maxVal;
+
+      if (state.mode === "clipped") {
+        if (stitchType === 'saddle') {
+          minVal = 6;
+          maxVal = 19;
+        } else {
+          minVal = 7;
+          maxVal = 20.5;
+        }
+      } else if (state.mode === "clipless") {
+        if (stitchType === 'saddle') {
+          minVal = 7;
+          maxVal = 21;
+        } else {
+          minVal = 8.5;
+          maxVal = 22.5;
+        }
+      } else if (state.mode === "w_clip") {
+        if (stitchType === 'saddle') {
+          minVal = 6;
+          maxVal = 17;
+        } else {
+          minVal = 6;
+          maxVal = 18.5;
+        }
+      } else {
+        minVal = 7;
+        maxVal = 18.5;
+      }
+
+      D.min = minVal;
+      D.max = maxVal;
+      if (state.dia < minVal) state.dia = minVal;
+      if (state.dia > maxVal) state.dia = maxVal;
+      if (D) D.value = state.dia;
+    }
+
+    function save() {
+      const toStore = {
+        ...state,
+        selectedColor: selectedColor,
+        historyOrder: state.historyOrder,
+        stitchType: stitchType
+      };
+      localStorage.setItem("psfs_v50_color", JSON.stringify(toStore));
+    }
+
+    function load() {
+      try {
+        const d = JSON.parse(localStorage.getItem("psfs_v50_color"));
+        if (d) {
+          state.limit = d.limit || 0;
+          state.used = d.used || 0;
+          state.qty = d.qty || 0;
+          state.mode = d.mode || null;
+          state.length = d.length || 85;
+          state.dia = d.dia || 7;
+          state.history = d.history || {};
+          state.historyOrder = d.historyOrder || [];
+          selectedColor = d.selectedColor !== undefined ? d.selectedColor : null;
+          stitchType = d.stitchType !== undefined ? d.stitchType : null;
+        } else {
+          selectedColor = null;
+          state.historyOrder = [];
+          stitchType = null;
+        }
+        if (selectedColor && !COLOR_LIST.includes(selectedColor)) selectedColor = null;
+        if (state.historyOrder) {
+          state.historyOrder = state.historyOrder.filter(key => state.history[key]);
+        } else {
+          state.historyOrder = [];
+        }
+      } catch (_) { selectedColor = null; state.historyOrder = []; stitchType = null; }
+      updateTitleColor();
+      updateStitchButtons();
+    }
+
+    load();
+    applyModeConstraints();
+    updateColorActiveUI();
+    updateStitchButtons();
+
+    // ============================================================
+    // 修复移动端滑块拖动时步进器数字不更新 + 悬停残留问题
+    // 使用 requestAnimationFrame 节流 + 立即更新显示 + 强制重置悬停
+    // ============================================================
+    let renderPending = false;
+
+    function scheduleRender() {
+      if (renderPending) return;
+      renderPending = true;
+      requestAnimationFrame(() => {
+        renderPending = false;
+        render();
+      });
+    }
+
+    // ---- Length 滑块 ----
+    function handleLengthChange(val) {
+      // 强制清除所有悬停状态，解决移动端悬停残留问题
+      resetAllHoverStates();
+
+      state.length = +val;
+      document.getElementById("Lv").innerText = state.length.toFixed(1);
+      scheduleRender();
+      save();
+    }
+
+    L.addEventListener('input', function(e) {
+      handleLengthChange(e.target.value);
+    });
+    L.addEventListener('touchmove', function(e) {
+      handleLengthChange(e.target.value);
+    });
+
+    // ---- Diameter 滑块 ----
+    function handleDiameterChange(val) {
+      // 强制清除所有悬停状态，解决移动端悬停残留问题
+      resetAllHoverStates();
+
+      state.dia = +val;
+      document.getElementById("Dv").innerText = state.dia.toFixed(1);
+      scheduleRender();
+      save();
+    }
+
+    D.addEventListener('input', function(e) {
+      handleDiameterChange(e.target.value);
+    });
+    D.addEventListener('touchmove', function(e) {
+      handleDiameterChange(e.target.value);
+    });
+
+    function setLimit(v) {
+      const newLimit = Math.max(0, state.limit + v);
+      state.limit = newLimit;
+
+      if (state.used === state.limit && state.limit > 0) {
+        state.mode = null;
+        stitchType = null;
+        selectedColor = null;
+        c1.classList.remove("active");
+        c2.classList.remove("active");
+        c3.classList.remove("active");
+        updateColorActiveUI();
+        updateTitleColor();
+      }
+
+      if (state.limit === 0) {
+        state.mode = null;
+        selectedColor = null;
+        stitchType = null;
+        c1.classList.remove("active");
+        c2.classList.remove("active");
+        c3.classList.remove("active");
+        updateColorActiveUI();
+        updateTitleColor();
+      } else {
+        if (stitchType === null) {
+          setTimeout(flashStitchButtons, 100);
+        }
+      }
+      updateStitchButtons();
+      applyModeConstraints();
+      render();
+      save();
+    }
+
+    function mode(m) {
+      if (state.limit === 0) {
+        toast("请先设置支持数量");
+        return;
+      }
+      if (stitchType === null) {
+        toast("请选择交叉缝或马鞍缝");
+        return;
+      }
+      state.mode = m;
+      selectedColor = null;
+      updateTitleColor();
+      applyModeConstraints();
+      c1.classList.toggle("active", m === "clipless");
+      c2.classList.toggle("active", m === "clipped");
+      c3.classList.toggle("active", m === "w_clip");
+      updateColorActiveUI();
+      render();
+      save();
+    }
+
+    function lenStep(v) {
+      state.length = Math.max(85, Math.min(165, +(state.length + v).toFixed(1)));
+      L.value = state.length;
+      render();
+      save();
+    }
+
+    function diaStep(v) {
+      state.dia = Math.max(+D.min, Math.min(+D.max, +(state.dia + v).toFixed(1)));
+      D.value = state.dia;
+      render();
+      save();
+    }
+
+    function toolCode() {
+      if (!state.mode) return "?";
+      return lenCode(state.length) + diaCode(state.dia);
+    }
+
+    function lenCode(v) {
+      const ranges = [{max:102},{max:118},{max:135},{max:150},{max:165}];
+      for (let i=0;i<ranges.length;i++){
+        if (v<=ranges[i].max) return i+1;
+      }
+      return 5;
+    }
+
+    function diaCode(v) {
+      if (!state.mode) return "A";
+
+      let ranges;
+
+      if (stitchType === 'saddle') {
+        if (state.mode === "clipped") {
+          ranges = [
+            { max: 6, code: "A" },
+            { max: 7, code: "B" },
+            { max: 9, code: "C" },
+            { max: 11, code: "D" },
+            { max: 13, code: "E" },
+            { max: 15, code: "F" },
+            { max: 17, code: "G" },
+            { max: 19, code: "G" }
+          ];
+        } else if (state.mode === "clipless") {
+          ranges = [
+            { max: 7, code: "A" },
+            { max: 9, code: "B" },
+            { max: 11, code: "C" },
+            { max: 13, code: "D" },
+            { max: 15, code: "E" },
+            { max: 17, code: "F" },
+            { max: 19, code: "G" },
+            { max: 21, code: "G" }
+          ];
+        } else if (state.mode === "w_clip") {
+          ranges = [
+            { max: 6, code: "B" },
+            { max: 7, code: "C" },
+            { max: 9, code: "D" },
+            { max: 11, code: "E" },
+            { max: 13, code: "F" },
+            { max: 15, code: "G" },
+            { max: 17, code: "G" }
+          ];
+        } else {
+          ranges = [
+            { max: 6, code: "A" },
+            { max: 7, code: "B" },
+            { max: 9, code: "C" },
+            { max: 11, code: "D" },
+            { max: 13, code: "E" },
+            { max: 15, code: "F" },
+            { max: 17, code: "G" },
+            { max: 19, code: "G" }
+          ];
+        }
+      } else {
+        if (state.mode === "clipped") {
+          ranges = [
+            { max: 7, code: "A" },
+            { max: 8.5, code: "B" },
+            { max: 10.5, code: "C" },
+            { max: 12.5, code: "D" },
+            { max: 14.5, code: "E" },
+            { max: 16.5, code: "F" },
+            { max: 18.5, code: "G" },
+            { max: 20.5, code: "G" }
+          ];
+        } else if (state.mode === "clipless") {
+          ranges = [
+            { max: 8.5, code: "A" },
+            { max: 10.5, code: "B" },
+            { max: 12.5, code: "C" },
+            { max: 14.5, code: "D" },
+            { max: 16.5, code: "E" },
+            { max: 18.5, code: "F" },
+            { max: 20.5, code: "G" },
+            { max: 22.5, code: "G" }
+          ];
+        } else if (state.mode === "w_clip") {
+          ranges = [
+            { max: 6, code: "B" },
+            { max: 8.5, code: "C" },
+            { max: 10.5, code: "D" },
+            { max: 12.5, code: "E" },
+            { max: 14.5, code: "F" },
+            { max: 16.5, code: "G" },
+            { max: 18.5, code: "G" }
+          ];
+        } else {
+          ranges = [
+            { max: 7, code: "A" },
+            { max: 8.5, code: "B" },
+            { max: 10.5, code: "C" },
+            { max: 12.5, code: "D" },
+            { max: 14.5, code: "E" },
+            { max: 16.5, code: "F" },
+            { max: 18.5, code: "G" },
+            { max: 20.5, code: "G" }
+          ];
+        }
+      }
+
+      for (const r of ranges) {
+        if (v <= r.max) return r.code;
+      }
+      return "A";
+    }
+
+    function getDiameterText() {
+      if (!state.mode) return "—";
+      const dc = diaCode(state.dia);
+      const diaNames = ["Micro","Ultra Slim","Slim","Standard","Wide","Extra Wide","Ultra Wide"];
+      const idx = dc.charCodeAt(0) - 65;
+      return (diaNames[idx] || "—");
+    }
+
+    function getDiameterClass() {
+      if (!state.mode) return "tag";
+      const dc = diaCode(state.dia);
+      const idx = dc.charCodeAt(0) - 65;
+      return "tag " + (["d1","d2","d3","d4","d5","d6","d7"][idx] || "tag");
+    }
+
+    function handleQtyChange(v) {
+      if (state.limit === 0) {
+        toast("请先设置数量");
+        return;
+      }
+      if (state.mode === null) {
+        toast("请选择笔夹类型");
+        return;
+      }
+      if (!selectedColor) {
+        showColorPickHint();
+        return;
+      }
+      const next = Math.max(0, state.qty + v);
+      if (state.used + next > state.limit) {
+        toast("超出支持数量");
+        return;
+      }
+      state.qty = next;
+      render();
+      save();
+    }
+
+    function qty(v) {
+      handleQtyChange(v);
+    }
+
+    function showConfirm() {
+      if (state.limit===0 || state.mode===null) {
+        toast("请选择笔夹类型");
+        return;
+      }
+      if (!selectedColor) {
+        showColorPickHint();
+        return;
+      }
+      if (state.qty<=0) return toast("数量为 0");
+      if (state.used+state.qty>state.limit) return toast("超出支持数量");
+
+      const modeText = getModeDisplayName(state.mode);
+      const stitchText = stitchType ? (stitchType === 'cross' ? '交叉缝' : '马鞍缝') : "—";
+      const hl = "#f97316";
+      const codeRaw = toolCode();
+      const displayName = COLOR_DISPLAY_MAP[selectedColor] || selectedColor;
+      const colorHex = COLOR_TEXT_MAP[selectedColor] || '#ffb347';
+      document.getElementById("confirmText").innerHTML =
+        codeRaw + " × <span style='color:" + hl + "; font-weight:600;'>" + state.qty + "</span>" +
+        " (L<span style='color:" + hl + "; font-weight:600;'>" + clean(state.length) + "</span>-Ø<span style='color:" + hl + "; font-weight:600;'>" + clean(state.dia) + "</span>-" +
+        "<span style='color:" + hl + "; font-weight:600;'>" + modeText + "</span>-" +
+        "<span style='color:" + colorHex + "; font-weight:600;'>" + displayName + "</span>-" +
+        "<span style='color:" + hl + "; font-weight:600;'>" + stitchText + "</span>)";
+
+      const confirmHint = document.getElementById("confirmHint");
+      if (confirmHint) {
+        confirmHint.classList.remove("blink");
+        void confirmHint.offsetWidth;
+        requestAnimationFrame(() => {
+          confirmHint.classList.add("blink");
+        });
+      }
+
+      document.getElementById("confirmPanel").style.display = "flex";
+    }
+
+    function hideConfirm() {
+      document.getElementById("confirmPanel").style.display = "none";
+    }
+
+    function doSave() {
+      if (!selectedColor) {
+        showColorPickHint();
+        return;
+      }
+      const code = toolCode();
+      const color = selectedColor;
+      const compositeKey = code + color;
+
+      if (!state.history[compositeKey]) {
+        state.history[compositeKey] = {
+          qty: 0,
+          code: code,
+          color: color,
+          lengthVal: state.length,
+          diaVal: state.dia,
+          modeVal: state.mode,
+          stitchType: stitchType,
+          timestamp: Date.now()
+        };
+        state.historyOrder.push(compositeKey);
+      } else {
+        state.history[compositeKey].timestamp = Date.now();
+        const idx = state.historyOrder.indexOf(compositeKey);
+        if (idx !== -1) state.historyOrder.splice(idx, 1);
+        state.historyOrder.push(compositeKey);
+      }
+
+      state.history[compositeKey].qty += state.qty;
+      state.used += state.qty;
+
+      c1.classList.remove("active");
+      c2.classList.remove("active");
+      c3.classList.remove("active");
+      state.mode = null;
+      stitchType = null;
+      selectedColor = null;
+      state.qty = 0;
+
+      updateColorActiveUI();
+      updateTitleColor();
+      updateStitchButtons();
+
+      hideConfirm();
+      render();
+      save();
+      toast("已配置 " + state.used + " 个笔套");
+    }
+
+    function showClearConfirm() {
+      document.getElementById("clearConfirmPanel").style.display = "flex";
+    }
+
+    function hideClearConfirm() {
+      document.getElementById("clearConfirmPanel").style.display = "none";
+    }
+
+    function doClear() {
+      state = {
+        limit: 0,
+        used: 0,
+        qty: 0,
+        mode: null,
+        length: 85,
+        dia: 7,
+        history: {},
+        historyOrder: []
+      };
+      selectedColor = null;
+      stitchType = null;
+      localStorage.removeItem("psfs_v50_color");
+      if(L) L.value = 85;
+      if(D) D.value = 7;
+      c1.classList.remove("active");
+      c2.classList.remove("active");
+      c3.classList.remove("active");
+      updateColorActiveUI();
+      updateTitleColor();
+      updateStitchButtons();
+      render();
+      toast("已清空");
+      hideClearConfirm();
+    }
+
+    function showDeleteConfirm(key, qty) {
+      pendingDeleteKey = key;
+      pendingDeleteQty = qty;
+      document.getElementById("deleteConfirmPanel").style.display = "flex";
+    }
+
+    function hideDeleteConfirm() {
+      document.getElementById("deleteConfirmPanel").style.display = "none";
+      pendingDeleteKey = null;
+      pendingDeleteQty = null;
+    }
+
+    function doDelete() {
+      if (pendingDeleteKey) {
+        state.used -= pendingDeleteQty;
+        delete state.history[pendingDeleteKey];
+        const idx = state.historyOrder.indexOf(pendingDeleteKey);
+        if (idx !== -1) state.historyOrder.splice(idx, 1);
+        render();
+        save();
+        toast("已删除");
+      }
+      hideDeleteConfirm();
+    }
+
+    function applyBlinking() {
+      // 当 limit === 0 时，胶囊步进器慢闪
+      if (state.limit === 0) {
+        triggerCapsuleBlink();
+      } else {
+        stopCapsuleBlink();
+      }
+
+      if (state.limit >= 1 && stitchType !== null && state.mode === null) {
+        if (c1) triggerBlink(c1);
+        if (c2) triggerBlink(c2);
+        if (c3) triggerBlink(c3);
+      } else {
+        if (c1) c1.classList.remove("blink");
+        if (c2) c2.classList.remove("blink");
+        if (c3) c3.classList.remove("blink");
+      }
+
+      const totalUsed = Object.values(state.history).reduce((s, i) => s + i.qty, 0);
+
+      if (state.limit > 0 && totalUsed === state.limit) {
+        if (copyBtn && !copyBtn.disabled) {
+          triggerBlink(copyBtn);
+        }
+      } else {
+        if (copyBtn) {
+          copyBtn.classList.remove("blink");
+        }
+      }
+    }
+
+    function render() {
+      if (!sClipHoverActive && !wClipHoverActive && !nClipHoverActive) {
+        document.getElementById("limitVal").innerText = state.limit;
+
+        document.getElementById("Lv").innerText = state.length.toFixed(1);
+        document.getElementById("Dv").innerText = state.dia.toFixed(1);
+
+        const lc = lenCode(state.length);
+        const sizeNames = ["XS","S","M","L","XL"];
+        const ranges = ["85~102", "102~118", "118~135", "135~150", "150~165"];
+        document.getElementById("Lc").innerText = sizeNames[lc-1] + " (" + ranges[lc-1] + " mm)";
+        document.getElementById("Lc").className = "tag " + ["xs","s","m","l","xl"][lc-1];
+
+        const showSelectClipType = (state.limit >= 1 && stitchType !== null && state.mode === null);
+
+        if (state.mode !== null) {
+          dcSpan.innerText = getDiameterText();
+          dcSpan.className = getDiameterClass();
+        } else if (state.limit === 0) {
+          dcSpan.innerText = "笔身最宽（不含笔夹）";
+          dcSpan.className = "tag";
+        } else if (showSelectClipType) {
+          dcSpan.innerText = "请选择笔夹类型";
+          dcSpan.className = "tag mode-hint";
+        } else {
+          dcSpan.innerText = "笔身最宽（不含笔夹）";
+          dcSpan.className = "tag";
+        }
+      }
+
+      document.getElementById("q").innerText = state.qty;
+      renderPreviewText();
+      document.getElementById("previewCount").innerHTML = state.used + "/" + state.limit;
+
+      const hasMode = state.mode !== null;
+      const limitSet = state.limit >= 1;
+      const stitchSelected = (stitchType !== null);
+      const canUseMode = limitSet && stitchSelected;
+      const previewReady = limitSet && stitchSelected && hasMode;
+
+      if (qtyMinusBtn && qtyPlusBtn) {
+        if (previewReady) {
+          qtyMinusBtn.disabled = false;
+          qtyPlusBtn.disabled = false;
+          qtyMinusBtn.classList.remove('qty-btn-disabled');
+          qtyPlusBtn.classList.remove('qty-btn-disabled');
+        } else {
+          qtyMinusBtn.disabled = true;
+          qtyPlusBtn.disabled = true;
+          qtyMinusBtn.classList.add('qty-btn-disabled');
+          qtyPlusBtn.classList.add('qty-btn-disabled');
+        }
+      }
+
+      document.querySelectorAll(".card:nth-of-type(2) .switch button").forEach(b => b.disabled = !canUseMode);
+      document.querySelectorAll(".card:nth-of-type(2) .capsule-stepper button").forEach(b => b.disabled = !(canUseMode && hasMode));
+      if(D) D.disabled = !(canUseMode && hasMode);
+      if(L) L.disabled = !(canUseMode && hasMode);
+      document.querySelectorAll(".card:nth-of-type(3) .capsule-stepper button").forEach(b => b.disabled = !(canUseMode && hasMode));
+
+      const readyToSave = limitSet && hasMode && selectedColor && state.qty > 0;
+      genBtn.disabled = !readyToSave;
+
+      const colorChips = document.querySelectorAll('.color-chip');
+      colorChips.forEach(chip => {
+        if (limitSet && hasMode) {
+          chip.style.pointerEvents = 'auto';
+          chip.classList.remove('disabled');
+        } else {
+          chip.style.pointerEvents = 'none';
+          chip.classList.add('disabled');
+        }
+      });
+
+      const totalUsed = Object.values(state.history).reduce((s, i) => s + i.qty, 0);
+
+      copyBtn.disabled = totalUsed !== state.limit;
+
+      drawHistory();
+
+      applyBlinking();
+      updateColorActiveUI();
+      updateTitleColor();
+      updateStitchButtons();
+      save();
+    }
+
+    function drawHistory() {
+      const hDiv = document.getElementById("history");
+      hDiv.innerHTML = "";
+      const orderedKeys = state.historyOrder || [];
+      for (const key of orderedKeys) {
+        const it = state.history[key];
+        if (!it) continue;
+        const d = document.createElement("div");
+        d.className = "item";
+
+        const qtyVal = it.qty;
+        const lenVal = clean(it.lengthVal);
+        const diaVal = clean(it.diaVal);
+        const modeName = getModeDisplayName(it.modeVal);
+        const stitchName = it.stitchType ? (it.stitchType === 'cross' ? '交叉缝' : '马鞍缝') : "—";
+        const displayColorName = COLOR_DISPLAY_MAP[it.color] || it.color;
+        const colorHex = COLOR_TEXT_MAP[it.color] || '#ffb347';
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "item-code";
+        textSpan.innerHTML = `
+          ${it.code} × <span class="highlight-number">${qtyVal}</span>
+          (L<span class="highlight-number">${lenVal}</span>-Ø<span class="highlight-number">${diaVal}</span>-
+          <span class="highlight-number">${modeName}</span>-
+          <span class="color-name-in-history" style="color: ${colorHex};">${displayColorName}</span>-
+          <span class="highlight-number">${stitchName}</span>)
+        `;
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "del";
+        delBtn.innerText = "删除";
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          showDeleteConfirm(key, it.qty);
+        };
+
+        d.appendChild(textSpan);
+        d.appendChild(delBtn);
+        hDiv.appendChild(d);
+      }
+    }
+
+    function copy() {
+      const totalUsed = Object.values(state.history).reduce((s, i) => s + i.qty, 0);
+      if (totalUsed !== state.limit) {
+        toast("仅当配额完全使用时才可复制全部");
+        return;
+      }
+      if (!Object.keys(state.history).length) return;
+
+      const entries = [];
+      for (const k in state.history) {
+        const it = state.history[k];
+        const codeNum = parseInt(it.code, 10);
+        entries.push({
+          codeNum: codeNum,
+          code: it.code,
+          qty: it.qty,
+          lengthVal: it.lengthVal,
+          diaVal: it.diaVal,
+          modeVal: it.modeVal,
+          stitchType: it.stitchType,
+          color: it.color
+        });
+      }
+
+      entries.sort((a, b) => b.codeNum - a.codeNum);
+
+      let out = "已配置 " + state.used + "/" + state.limit + "\n\n";
+      for (const e of entries) {
+        const modeName = getModeDisplayName(e.modeVal);
+        const stitchName = e.stitchType ? (e.stitchType === 'cross' ? '交叉缝' : '马鞍缝') : "—";
+        const displayColorName = COLOR_DISPLAY_MAP[e.color] || e.color;
+        out += `${e.code} × ${e.qty} (L${clean(e.lengthVal)}-Ø${clean(e.diaVal)}-${modeName}-${displayColorName}-${stitchName})\n`;
+      }
+      navigator.clipboard.writeText(out);
+      toast("已复制");
+      copyBtn.classList.remove("blink");
+    }
+
+    function toast(t) {
+      const x = document.getElementById("toast");
+      x.innerText = t;
+      x.style.opacity = 1;
+      setTimeout(()=>x.style.opacity = 0, 1500);
+    }
+
+    document.addEventListener("click", (e) => {
+      if (e.target && e.target.tagName === 'BUTTON') {
+        stopBlinking();
+      }
+    });
+
+    function enableLongPressStepper() {
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      document.querySelectorAll(".capsule-stepper button").forEach(btn=>{
+        if(isTouch) return;
+        let timer = null;
+        const start = () => {
+          if(timer) return;
+          timer = setTimeout(()=>{
+            timer = setInterval(()=>btn.click(),80);
+          },300);
+        };
+        const stop = () => {
+          clearTimeout(timer);
+          clearInterval(timer);
+          timer = null;
+        };
+        btn.addEventListener("mousedown", start);
+        btn.addEventListener("mouseup", stop);
+        btn.addEventListener("mouseleave", stop);
+      });
+    }
+
+    initColorSelector();
+    render();
+    enableLongPressStepper();
+  </script>
+
+</body>
+</html>
